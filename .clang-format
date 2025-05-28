@@ -1,0 +1,12 @@
+BasedOnStyle: Google
+IndentWidth: 4
+AccessModifierOffset: -2
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+BreakBeforeBraces: Stroustrup
+DerivePointerAlignment: false
+PointerAlignment: Left
+SortIncludes: true
+Standard: c++20

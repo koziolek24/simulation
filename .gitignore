@@ -1,0 +1,6 @@
+build/
+.cache/
+compile_commands.json
+notes.txt
+include/nlohmann/json.hpp
+*.json

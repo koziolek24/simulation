@@ -1,0 +1,509 @@
+38
+Mlociny
+Wawrzyszew
+StareBielany
+Slodowiec
+Marymont
+PlacWilsona
+DworzecGdanski
+RatuszArsenal
+Swietokrzyska
+Centrum
+Politechnika
+PoleMokotowskie
+Raclawicka
+Wierzbno
+Wilanowska
+Sluzew
+Ursynow
+Stoklosy
+Imielin
+Natolin
+Kabaty
+Brodno
+Kondratowicza
+Zacisze
+TargowekMieszkaniowy
+Trocka
+Szwedzka
+DworzecWilenski
+StadionNarodowy
+CentrumNaukiKopernik
+NowySwiatUniwersytet
+RondoONZ
+RondoDaszynskiego
+Plocka
+Mlynow
+KsieciaJanusza
+Ulrychow
+Bemowo
+
+40
+VillaZlotyPromien
+Wilanowska
+
+DomSzmaragdowyKsiezyc
+Slodowiec
+
+BursztynowaTwierdza
+RatuszArsenal
+
+KrysztalowyZamek
+Mlociny
+
+WillaCzerwonySmok
+Swietokrzyska
+
+DomNiebieskiWiatr
+DworzecGdanski
+
+VillaZielonaFala
+Politechnika
+
+DomBialyOrzel
+CentrumNaukiKopernik
+
+SzafirowaPrzystan
+StadionNarodowy
+
+WillaZloteWzgorze
+Kabaty
+
+DomCzarnyKot
+Wawrzyszew
+
+VillaSrebrnaGwiazda
+Marymont
+
+DomRubinowyOgon
+Szwedzka
+
+WillaTurkusowyLis
+StareBielany
+
+DomZlotyLis
+RondoONZ
+
+VillaBursztynowyPtak
+PlacWilsona
+
+DomSzaryWilk
+DworzecGdanski
+
+WillaKoralowyRekin
+Imielin
+
+DomPerlowyDelfin
+Ursynow
+
+VillaPurpurowyFeniks
+NowySwiatUniwersytet
+
+DomZielonyZolw
+Wierzbno
+
+WillaGranatowyJastrzab
+Raclawicka
+
+DomBrazowyNiedzwiedz
+Wilanowska
+
+VillaSzafirowyWaz
+Marymont
+
+DomZlotyDzik
+RatuszArsenal
+
+WillaCzarnaPerla
+Stoklosy
+
+DomSrebrnyJez
+Natolin
+
+VillaKarmazynowyLew
+Wawrzyszew
+
+DomNiebieskiDym
+Mlociny
+
+WillaBialyKruk
+Kabaty
+
+DomZielonyPajak
+Ursynow
+
+VillaCzerwonyKsiezyc
+Slodowiec
+
+DomTurkusowyPies
+Szwedzka
+
+WillaZlotyKrokodyl
+RatuszArsenal
+
+DomSzaryKoziorozec
+DworzecGdanski
+
+VillaRubinowaReka
+Swietokrzyska
+
+DomBialyFeniks
+Centrum
+
+WillaCzarnyLabedz
+Politechnika
+
+DomSrebrnySmok
+StadionNarodowy
+
+VillaZlotyGoryl
+NowySwiatUniwersytet
+
+40
+CyberNovaTech
+8 20
+Politechnika
+
+BlueSkyFinance
+7 19
+Centrum
+
+GreenHarborOffices
+6 22
+RatuszArsenal
+
+QuantumLeapLabs
+9 21
+NowySwiatUniwersytet
+
+DiamondDataTowers
+8 18
+DworzecGdanski
+
+FuturePulseSystems
+7 20
+Swietokrzyska
+
+UrbanBloomHub
+6 23
+Wilanowska
+
+NanoCoreIndustries
+8 17
+Mlociny
+
+SkylineConsulting
+9 19
+PlacWilsona
+
+VertexSolutions
+7 21
+Marymont
+
+EclipseCreative
+10 20
+Slodowiec
+
+TitanLogistics
+6 24
+Ulrychow
+
+AuroraMediaGroup
+8 22
+StadionNarodowy
+
+NebulaAnalytics
+9 18
+Kabaty
+
+PinnacleArchitects
+7 19
+Wierzbno
+
+HorizonBanking
+8 20
+RondoONZ
+
+CatalystEngineering
+7 17
+Szwedzka
+
+SummitLawFirm
+9 19
+StareBielany
+
+VanguardTech
+8 21
+Imielin
+
+OdysseyResearch
+6 20
+Ursynow
+
+ZenithMarketing
+9 18
+Raclawicka
+
+InfinityDesign
+8 19
+Natolin
+
+ParamountInsurance
+7 17
+Wawrzyszew
+
+NovaPharma
+8 20
+Wierzbno
+
+StellarAdvisory
+9 19
+Marymont
+
+TerraFirmaBuilders
+6 18
+Stoklosy
+
+ApexBiotech
+8 20
+Mlociny
+
+CrimsonRetail
+9 21
+Slodowiec
+
+PolarisLogistics
+7 19
+Szwedzka
+
+IroncladSecurity
+0 24
+DworzecGdanski
+
+SolarFlareEnergy
+8 16
+Wilanowska
+
+OceanicShipping
+6 22
+CentrumNaukiKopernik
+
+GalaxyEntertainment
+12 24
+Swietokrzyska
+
+TitaniumWorks
+7 15
+Politechnika
+
+BlueHorizonTravel
+9 20
+NowySwiatUniwersytet
+
+PhoenixMedia
+8 23
+StadionNarodowy
+
+GoldenGrainFoods
+5 19
+Kabaty
+
+SilverLineTelecom
+8 22
+Ursynow
+
+EmeraldHealth
+7 20
+Raclawicka
+
+ObsidianSoftware
+10 22
+Wierzbno
+
+15
+
+NeonGameHub
+Centrum
+
+PixelVRWorld
+Politechnika
+
+JazzCellarClub
+NowySwiatUniwersytet
+
+GravityTrampoline
+RatuszArsenal
+
+CineMaxNext
+Swietokrzyska
+
+BowlingThunder
+Wilanowska
+
+RetroArcadeMuseum
+Mlociny
+
+AquaAdventurePark
+Kabaty
+
+CosmicLaserTag
+Centrum
+
+VinylLiveBar
+Politechnika
+
+ExtremeEscapeRooms
+RatuszArsenal
+
+DigitalArtGallery
+NowySwiatUniwersytet
+
+KaraokeBeats
+Swietokrzyska
+
+VirtualSportsArena
+Wilanowska
+
+BoardGameEmpire
+Mlociny
+
+37
+Mlociny Wawrzyszew
+Wawrzyszew StareBielany
+StareBielany Slodowiec
+Slodowiec Marymont
+Marymont PlacWilsona
+PlacWilsona DworzecGdanski
+DworzecGdanski RatuszArsenal
+RatuszArsenal Swietokrzyska
+Swietokrzyska Centrum
+Centrum Politechnika
+Politechnika PoleMokotowskie
+PoleMokotowskie Raclawicka
+Raclawicka Wierzbno
+Wierzbno Wilanowska
+Wilanowska Sluzew
+Sluzew Ursynow
+Ursynow Stoklosy
+Stoklosy Imielin
+Imielin Natolin
+Natolin Kabaty
+Brodno Kondratowicza
+Kondratowicza Zacisze
+Zacisze TargowekMieszkaniowy
+TargowekMieszkaniowy Trocka
+Trocka Szwedzka
+Szwedzka DworzecWilenski
+DworzecWilenski StadionNarodowy
+StadionNarodowy CentrumNaukiKopernik
+CentrumNaukiKopernik NowySwiatUniwersytet
+NowySwiatUniwersytet Swietokrzyska
+Swietokrzyska RondoONZ
+RondoONZ RondoDaszynskiego
+RondoDaszynskiego Plocka
+Plocka Mlynow
+Mlynow KsieciaJanusza
+KsieciaJanusza Ulrychow
+Ulrychow Bemowo
+
+100
+32 VillaZlotyPromien CyberNovaTech
+45 VillaZlotyPromien BlueSkyFinance
+28 DomSzmaragdowyKsiezyc GreenHarborOffices
+51 DomSzmaragdowyKsiezyc QuantumLeapLabs
+36 BursztynowaTwierdza DiamondDataTowers
+23 BursztynowaTwierdza FuturePulseSystems
+42 KrysztalowyZamek UrbanBloomHub
+29 KrysztalowyZamek NanoCoreIndustries
+39 WillaCzerwonySmok SkylineConsulting
+47 WillaCzerwonySmok VertexSolutions
+31 DomNiebieskiWiatr EclipseCreative
+25 DomNiebieskiWiatr TitanLogistics
+52 VillaZielonaFala AuroraMediaGroup
+38 VillaZielonaFala NebulaAnalytics
+27 DomBialyOrzel PinnacleArchitects
+43 DomBialyOrzel HorizonBanking
+35 SzafirowaPrzystan CatalystEngineering
+41 SzafirowaPrzystan SummitLawFirm
+46 WillaZloteWzgorze VanguardTech
+33 WillaZloteWzgorze OdysseyResearch
+24 DomCzarnyKot ZenithMarketing
+57 DomCzarnyKot InfinityDesign
+29 VillaSrebrnaGwiazda ParamountInsurance
+34 VillaSrebrnaGwiazda NovaPharma
+39 DomRubinowyOgon StellarAdvisory
+26 DomRubinowyOgon TerraFirmaBuilders
+48 WillaTurkusowyLis ApexBiotech
+36 WillaTurkusowyLis CrimsonRetail
+42 DomZlotyLis PolarisLogistics
+31 DomZlotyLis IroncladSecurity
+28 VillaBursztynowyPtak SolarFlareEnergy
+45 VillaBursztynowyPtak OceanicShipping
+37 DomSzaryWilk GalaxyEntertainment
+22 DomSzaryWilk TitaniumWorks
+53 WillaKoralowyRekin BlueHorizonTravel
+41 WillaKoralowyRekin PhoenixMedia
+32 DomPerlowyDelfin GoldenGrainFoods
+29 DomPerlowyDelfin SilverLineTelecom
+44 VillaPurpurowyFeniks EmeraldHealth
+36 VillaPurpurowyFeniks ObsidianSoftware
+25 DomZielonyZolw CyberNovaTech
+47 DomZielonyZolw BlueSkyFinance
+39 WillaGranatowyJastrzab GreenHarborOffices
+28 WillaGranatowyJastrzab QuantumLeapLabs
+50 DomBrazowyNiedzwiedz DiamondDataTowers
+33 DomBrazowyNiedzwiedz FuturePulseSystems
+42 VillaSzafirowyWaz UrbanBloomHub
+31 VillaSzafirowyWaz NanoCoreIndustries
+29 DomZlotyDzik SkylineConsulting
+38 DomZlotyDzik VertexSolutions
+45 WillaCzarnaPerla EclipseCreative
+26 WillaCzarnaPerla TitanLogistics
+35 DomSrebrnyJez AuroraMediaGroup
+41 DomSrebrnyJez NebulaAnalytics
+32 VillaKarmazynowyLew PinnacleArchitects
+48 VillaKarmazynowyLew HorizonBanking
+27 DomNiebieskiDym CatalystEngineering
+39 DomNiebieskiDym SummitLawFirm
+44 WillaBialyKruk VanguardTech
+36 WillaBialyKruk OdysseyResearch
+30 VillaZlotyGoryl CyberNovaTech
+49 VillaZlotyGoryl BlueSkyFinance
+40 DomSzaryKoziorozec GreenHarborOffices
+37 DomSzaryKoziorozec QuantumLeapLabs
+34 BursztynowaTwierdza DiamondDataTowers
+28 BursztynowaTwierdza FuturePulseSystems
+45 KrysztalowyZamek UrbanBloomHub
+31 KrysztalowyZamek NanoCoreIndustries
+42 WillaCzerwonySmok SkylineConsulting
+38 WillaCzerwonySmok VertexSolutions
+33 DomNiebieskiWiatr EclipseCreative
+29 DomNiebieskiWiatr TitanLogistics
+50 VillaZielonaFala AuroraMediaGroup
+39 VillaZielonaFala NebulaAnalytics
+28 DomBialyOrzel PinnacleArchitects
+44 DomBialyOrzel HorizonBanking
+36 SzafirowaPrzystan CatalystEngineering
+42 SzafirowaPrzystan SummitLawFirm
+47 WillaZloteWzgorze VanguardTech
+34 WillaZloteWzgorze OdysseyResearch
+26 DomCzarnyKot ZenithMarketing
+58 DomCzarnyKot InfinityDesign
+30 VillaSrebrnaGwiazda ParamountInsurance
+35 VillaSrebrnaGwiazda NovaPharma
+40 DomRubinowyOgon StellarAdvisory
+27 DomRubinowyOgon TerraFirmaBuilders
+49 WillaTurkusowyLis ApexBiotech
+37 WillaTurkusowyLis CrimsonRetail
+43 DomZlotyLis PolarisLogistics
+32 DomZlotyLis IroncladSecurity
+29 VillaBursztynowyPtak SolarFlareEnergy
+46 VillaBursztynowyPtak OceanicShipping
+38 DomSzaryWilk GalaxyEntertainment
+23 DomSzaryWilk TitaniumWorks
+54 WillaKoralowyRekin BlueHorizonTravel
+42 WillaKoralowyRekin PhoenixMedia
+33 DomPerlowyDelfin GoldenGrainFoods
+30 DomPerlowyDelfin SilverLineTelecom
+45 VillaPurpurowyFeniks EmeraldHealth
+37 VillaPurpurowyFeniks ObsidianSoftware
