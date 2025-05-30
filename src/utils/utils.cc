@@ -226,9 +226,9 @@ void reader::readJsonStructure(const std::string path, zpr::simulationEngine& en
         unsigned int id = data["Workers"]["Worker"][(long unsigned int)(i)]["id"];
         unsigned int age = data["Workers"]["Worker"][(long unsigned int)(i)]["age"];
         std::shared_ptr<zpr::Home> sHome =
-            std::dynamic_pointer_cast<zpr::Home>(engine.findNode(home));
+            std::dynamic_pointer_cast<zpr::Home>(engine.getNodeByName(home));
         std::shared_ptr<zpr::Workplace> sWorkplace =
-            std::dynamic_pointer_cast<zpr::Workplace>(engine.findNode(workplace));
+            std::dynamic_pointer_cast<zpr::Workplace>(engine.getNodeByName(workplace));
         zpr::Worker worker = zpr::Worker(id, age, sHome, sHome, sWorkplace);
         std::shared_ptr<zpr::Worker> sWorker = std::make_shared<zpr::Worker>(worker);
         engine.addWorker(sWorker);

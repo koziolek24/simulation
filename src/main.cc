@@ -11,13 +11,13 @@ int main()
     zpr::reader reader;
     // reader.writeJsonStructure("../dane.json");
     reader.readJsonStructure("/home/maciej/code/cpp/zpr25l/dane.json", engine);
-    engine.calculateAllPaths();
+    engine.calculateAllPaths(engine.getAllNodes());
     for (int i = 0; i < 400; ++i) {
         engine.doAction();
         unsigned int hour = engine.getHour();
         unsigned int minute = engine.getMinute();
-        if (hour == 7 or hour == 8 or hour == 16 or
-            hour == 17 or (hour >= 20 and minute%30 == 0)) {
+        if (hour == 7 or hour == 8 or hour == 16 or hour == 17 or
+            (hour >= 20 and minute % 30 == 0)) {
             std::cout << engine.getDay() << " " << engine.getHour() << ":" << engine.getMinute()
                       << std::endl;
             for (auto node : engine.getAllNodes()) {
@@ -32,6 +32,3 @@ int main()
     //     return 1;
     // return gw.run();
 }
-
-// A G
-// A B C D E F G

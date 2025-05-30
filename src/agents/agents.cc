@@ -5,24 +5,9 @@ unsigned int Agent::getAge()
 {
     return this->age_;
 }
-std::string Agent::getHealthStatus()
+healthStatus Agent::getHealthStatus()
 {
-    std::string status = "";
-    switch (this->health_) {
-        case 0:
-            status = "Healthy";
-            break;
-        case 1:
-            status = "Infected";
-            break;
-        case 2:
-            status = "Sick";
-            break;
-        case 3:
-            status = "Dead";
-            break;
-    }
-    return status;
+    return this->health_;
 }
 void Agent::setHealthStatus(healthStatus health)
 {
@@ -42,5 +27,15 @@ target Agent::getTarget()
 void Agent::setTarget(target newTarget)
 {
     this->target_ = newTarget;
+}
+
+void Agent::setAge(unsigned int newAge)
+{
+    this->age_ = newAge;
+}
+
+void Agent::setID(unsigned int newID)
+{
+    this->id_ = newID;
 }
 }  // namespace zpr

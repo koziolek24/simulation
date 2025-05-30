@@ -8,7 +8,6 @@
  */
 #ifndef AGENTS_H
 #define AGENTS_H
-#include <string>
 
 namespace zpr {
 enum healthStatus { Healthy, Infected, Sick, Dead };
@@ -25,7 +24,7 @@ class Agent {
         : id_(id), age_(age), health_(Healthy), target_(HomeTarget)
     {
     }
-    std::string getHealthStatus();
+    healthStatus getHealthStatus();
     unsigned int getAge();
     unsigned int getID();
     void setHealthStatus(healthStatus health);

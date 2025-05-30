@@ -7,27 +7,6 @@
 #include "agents/agents.h"
 namespace zpr {
 
-// std::vector<std::weak_ptr<zpr::Node>> collectNeighbours(const std::shared_ptr<zpr::Node>& n)
-// {
-//     std::vector<std::weak_ptr<zpr::Node>> out;
-
-//     if (!n) return out;
-//     std::string type = n->getNodeType();
-//     if (type == "Metro") {
-//         auto* m = dynamic_cast<zpr::Metro*>(n.get());
-//         for (auto& sp : m->getConnectedNodes())
-//             out.push_back(sp);
-//     }
-
-//     if (type == "Home" or type == "Workplace" or type == "Entertainment" or type == "Place") {
-//         auto* p = dynamic_cast<zpr::Place*>(n.get());
-//         if (auto metro = p->getConnecingStation().lock())
-//             out.push_back(std::move(metro));
-//     }
-
-//     return out;
-// }
-
 std::vector<std::weak_ptr<zpr::Agent>> Node::getPeople()
 {
     return this->presentPeople_;
@@ -82,7 +61,7 @@ unsigned int Node::getHealthyCount()
     unsigned int healthyCount = 0;
     for (const auto& wPeople : this->presentPeople_) {
         auto people = wPeople.lock();
-        if (people->getHealthStatus() == "Healthy")
+        if (people->getHealthStatus() == Healthy)
             healthyCount++;
     }
     return healthyCount;
@@ -92,8 +71,8 @@ unsigned int Node::getInfectedCount()
     unsigned int infectedCound = 0;
     for (const auto& wPeople : this->presentPeople_) {
         auto people = wPeople.lock();
-        std::string healthStatus = people->getHealthStatus();
-        if (healthStatus == "Infected" || healthStatus == "Sick")
+        healthStatus healthStatus = people->getHealthStatus();
+        if (healthStatus == Infected || healthStatus == Sick)
             infectedCound++;
     }
     return infectedCound;
@@ -108,7 +87,7 @@ void Metro::addConnection(const std::shared_ptr<zpr::Node>& newNode)
     this->connectedNodes_.push_back(std::move(newNode));
 }
 
-void Place::addConnectingStation(const std::weak_ptr<zpr::Metro>& connectingStation)
+void Place::addConnectingStation(const std::shared_ptr<zpr::Metro>& connectingStation)
 {
     this->connectingStation_ = std::move(connectingStation);
 }
@@ -125,7 +104,7 @@ unsigned int Workplace::getClosingHour()
 {
     return this->closingHour_;
 }
-void Home::addPeopleLivingHere(std::weak_ptr<zpr::Agent> newPeople)
+void Home::addPeopleLivingHere(std::shared_ptr<zpr::Agent> newPeople)
 {
     this->PeopleLivingHere_.push_back(std::move(newPeople));
 }
@@ -144,6 +123,26 @@ std::vector<std::weak_ptr<zpr::Node>> Place::getAllNeighbours()
     std::vector<std::weak_ptr<zpr::Node>> out;
     out.push_back(this->getConnecingStation());
     return out;
+}
+
+void Workplace::setClosingHour(unsigned int newClosingHour)
+{
+    this->closingHour_ = newClosingHour;
+}
+
+void Workplace::setOpeningHour(unsigned int newOpeningHour)
+{
+    this->openingHour_= newOpeningHour;
+}
+
+void Node::setName(std::string newName)
+{
+    this->name_ = newName;
+}
+
+void Node::setID(unsigned int newID)
+{
+    this->id_ = newID;
 }
 
 unsigned int Node::getID()

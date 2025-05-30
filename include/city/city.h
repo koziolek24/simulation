@@ -75,7 +75,7 @@ class Place : public Node {
         : Node(id, newName, type), connectingStation_()
     {
     }
-    void addConnectingStation(const std::weak_ptr<zpr::Metro>& connectingStation);
+    void addConnectingStation(const std::shared_ptr<zpr::Metro>& connectingStation);
     std::weak_ptr<zpr::Metro> getConnecingStation();
     std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() override;
 };
@@ -93,6 +93,8 @@ class Workplace : public Place {
     }
     unsigned int getOpeningHour();
     unsigned int getClosingHour();
+    void setOpeningHour(unsigned int newOpeningHour);
+    void setClosingHour(unsigned int newClosingHour);
 };
 class Home : public Place {
   private:
@@ -103,7 +105,7 @@ class Home : public Place {
         : Place(id, newName, type)
     {
     }
-    void addPeopleLivingHere(std::weak_ptr<zpr::Agent> newPeople);
+    void addPeopleLivingHere(std::shared_ptr<zpr::Agent> newPeople);
     std::vector<std::weak_ptr<zpr::Agent>> getPeopleLivingHere();
 };
 
