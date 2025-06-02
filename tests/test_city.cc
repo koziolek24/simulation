@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <vector>
-#include "city/city.h"
+
 #include "agents/agents.h"
 #include "agents/peoples.h"
+#include "city/city.h"
 
 class CityNetworkTest : public ::testing::Test {
-protected:
-    void SetUp() override {
+  protected:
+    void SetUp() override
+    {
         metro1 = std::make_shared<zpr::Metro>(1, "Metro Station 1");
         metro2 = std::make_shared<zpr::Metro>(2, "Metro Station 2");
 
@@ -36,14 +39,16 @@ protected:
 // ============================================================================
 // Node Base Class Tests
 // ==================================`==========================================
-TEST_F(CityNetworkTest, NodeConstructorAndBasicGetters) {
+TEST_F(CityNetworkTest, NodeConstructorAndBasicGetters)
+{
     EXPECT_EQ(metro1->getID(), 1);
     EXPECT_EQ(metro1->getName(), "Metro Station 1");
-    EXPECT_EQ(metro1->getNodeType(), "Metro");
+    EXPECT_EQ(metro1->getNodeType(), zpr::metroType);
     EXPECT_EQ(metro1->getPeopleCount(), 0);
 }
 
-TEST_F(CityNetworkTest, NodeSetters) {
+TEST_F(CityNetworkTest, NodeSetters)
+{
     metro1->setID(100);
     metro1->setName("New Metro Name");
 
@@ -51,7 +56,8 @@ TEST_F(CityNetworkTest, NodeSetters) {
     EXPECT_EQ(metro1->getName(), "New Metro Name");
 }
 
-TEST_F(CityNetworkTest, NodeEquality) {
+TEST_F(CityNetworkTest, NodeEquality)
+{
     auto metro3 = std::make_shared<zpr::Metro>(1, "Different Name");
     auto metro4 = std::make_shared<zpr::Metro>(999, "Metro Station 1");
 
@@ -59,7 +65,8 @@ TEST_F(CityNetworkTest, NodeEquality) {
     EXPECT_FALSE(*metro1 == *metro4);
 }
 
-TEST_F(CityNetworkTest, AddAndRemovePeople) {
+TEST_F(CityNetworkTest, AddAndRemovePeople)
+{
     EXPECT_EQ(metro1->getPeopleCount(), 0);
     EXPECT_TRUE(metro1->getPeople().empty());
 
@@ -75,7 +82,8 @@ TEST_F(CityNetworkTest, AddAndRemovePeople) {
     EXPECT_EQ(metro1->getPeopleCount(), 1);
 }
 
-TEST_F(CityNetworkTest, HealthStatusCounting) {
+TEST_F(CityNetworkTest, HealthStatusCounting)
+{
     agent1->setHealthStatus(zpr::Healthy);
     agent2->setHealthStatus(zpr::Infected);
     agent3->setHealthStatus(zpr::Sick);
@@ -89,17 +97,19 @@ TEST_F(CityNetworkTest, HealthStatusCounting) {
     EXPECT_EQ(metro1->getPeopleCount(), 3);
 }
 
-TEST_F(CityNetworkTest, NodeTypeIdentification) {
-    EXPECT_EQ(metro1->getNodeType(), "Metro");
-    EXPECT_EQ(home1->getNodeType(), "Home");
-    EXPECT_EQ(workplace1->getNodeType(), "Workplace");
-    EXPECT_EQ(entertainment->getNodeType(), "Entertainment");
+TEST_F(CityNetworkTest, NodeTypeIdentification)
+{
+    EXPECT_EQ(metro1->getNodeType(), zpr::metroType);
+    EXPECT_EQ(home1->getNodeType(), zpr::homeType);
+    EXPECT_EQ(workplace1->getNodeType(), zpr::workplaceType);
+    EXPECT_EQ(entertainment->getNodeType(), zpr::entertainmentType);
 }
 
 // ============================================================================
 // Metro Class Tests
 // ============================================================================
-TEST_F(CityNetworkTest, MetroConnections) {
+TEST_F(CityNetworkTest, MetroConnections)
+{
     EXPECT_TRUE(metro1->getConnectedNodes().empty());
     EXPECT_TRUE(metro1->getAllNeighbours().empty());
 
@@ -116,7 +126,8 @@ TEST_F(CityNetworkTest, MetroConnections) {
 // ============================================================================
 // Place Class Tests
 // ============================================================================
-TEST_F(CityNetworkTest, PlaceConnectingStation) {
+TEST_F(CityNetworkTest, PlaceConnectingStation)
+{
     EXPECT_TRUE(home1->getConnecingStation().expired());
 
     home1->addConnectingStation(metro1);
@@ -132,7 +143,8 @@ TEST_F(CityNetworkTest, PlaceConnectingStation) {
 // ============================================================================
 // Workplace Class Tests
 // ============================================================================
-TEST_F(CityNetworkTest, WorkplaceHours) {
+TEST_F(CityNetworkTest, WorkplaceHours)
+{
     EXPECT_EQ(workplace1->getOpeningHour(), 9);
     EXPECT_EQ(workplace1->getClosingHour(), 17);
 
@@ -146,7 +158,8 @@ TEST_F(CityNetworkTest, WorkplaceHours) {
 // ============================================================================
 // Home Class Tests
 // ============================================================================
-TEST_F(CityNetworkTest, HomePeopleLiving) {
+TEST_F(CityNetworkTest, HomePeopleLiving)
+{
     EXPECT_TRUE(home1->getPeopleLivingHere().empty());
 
     home1->addPeopleLivingHere(worker1);
@@ -159,7 +172,8 @@ TEST_F(CityNetworkTest, HomePeopleLiving) {
 // ============================================================================
 // Integration Tests
 // ============================================================================
-TEST_F(CityNetworkTest, NetworkConnectivity) {
+TEST_F(CityNetworkTest, NetworkConnectivity)
+{
     home1->addConnectingStation(metro1);
     metro1->addConnection(metro2);
     workplace1->addConnectingStation(metro2);
@@ -177,7 +191,8 @@ TEST_F(CityNetworkTest, NetworkConnectivity) {
     EXPECT_EQ(metro2FromMetro1->getID(), metro2->getID());
 }
 
-TEST_F(CityNetworkTest, WorkerDailyCommute) {
+TEST_F(CityNetworkTest, WorkerDailyCommute)
+{
     home1->addConnectingStation(metro1);
     metro1->addConnection(metro2);
     workplace1->addConnectingStation(metro2);
@@ -221,7 +236,8 @@ TEST_F(CityNetworkTest, WorkerDailyCommute) {
     EXPECT_EQ(workerWorkplace->getID(), workplace1->getID());
 }
 
-TEST_F(CityNetworkTest, InfectionSpreadSimulation) {
+TEST_F(CityNetworkTest, InfectionSpreadSimulation)
+{
     agent1->setHealthStatus(zpr::Infected);
     agent2->setHealthStatus(zpr::Healthy);
     worker1->setHealthStatus(zpr::Healthy);
@@ -247,7 +263,8 @@ TEST_F(CityNetworkTest, InfectionSpreadSimulation) {
 // ============================================================================
 // Edge Cases and Error Handling
 // ============================================================================
-TEST_F(CityNetworkTest, WeakPtrSafety) {
+TEST_F(CityNetworkTest, WeakPtrSafety)
+{
     {
         auto tempAgent = std::make_shared<zpr::Agent>(999, 40);
         metro1->addPeople(tempAgent);
@@ -258,7 +275,8 @@ TEST_F(CityNetworkTest, WeakPtrSafety) {
     EXPECT_GE(metro1->getPeopleCount(), 1);
 }
 
-TEST_F(CityNetworkTest, WorkerWithExpiredReferences) {
+TEST_F(CityNetworkTest, WorkerWithExpiredReferences)
+{
     std::shared_ptr<zpr::Worker> testWorker;
 
     {
@@ -277,7 +295,8 @@ TEST_F(CityNetworkTest, WorkerWithExpiredReferences) {
     EXPECT_EQ(testWorker->getAge(), 25);
 }
 
-TEST_F(CityNetworkTest, MultipleAgentsVariousAges) {
+TEST_F(CityNetworkTest, MultipleAgentsVariousAges)
+{
     auto youngAgent = std::make_shared<zpr::Agent>(20, 15);
     auto middleAgedAgent = std::make_shared<zpr::Agent>(21, 45);
     auto elderlyAgent = std::make_shared<zpr::Agent>(22, 75);
@@ -297,7 +316,8 @@ TEST_F(CityNetworkTest, MultipleAgentsVariousAges) {
     EXPECT_EQ(elderlyAgent->getAge(), 76);
 }
 
-TEST_F(CityNetworkTest, ComplexNetworkScenario) {
+TEST_F(CityNetworkTest, ComplexNetworkScenario)
+{
     auto centralMetro = std::make_shared<zpr::Metro>(100, "Central Station");
     auto residentialArea = std::make_shared<zpr::Home>(101, "Residential Complex");
     auto businessDistrict = std::make_shared<zpr::Workplace>(102, "Business District", 8, 18);
@@ -310,8 +330,10 @@ TEST_F(CityNetworkTest, ComplexNetworkScenario) {
     centralMetro->addConnection(metro1);
     centralMetro->addConnection(metro2);
 
-    auto resident1 = std::make_shared<zpr::Worker>(200, 28, residentialArea, residentialArea, businessDistrict);
-    auto resident2 = std::make_shared<zpr::Worker>(201, 32, residentialArea, residentialArea, businessDistrict);
+    auto resident1 =
+        std::make_shared<zpr::Worker>(200, 28, residentialArea, residentialArea, businessDistrict);
+    auto resident2 =
+        std::make_shared<zpr::Worker>(201, 32, residentialArea, residentialArea, businessDistrict);
 
     residentialArea->addPeopleLivingHere(resident1);
     residentialArea->addPeopleLivingHere(resident2);
@@ -330,17 +352,22 @@ TEST_F(CityNetworkTest, ComplexNetworkScenario) {
 }
 
 // Performance Test
-TEST_F(CityNetworkTest, LargeScaleSimulation) {
+TEST_F(CityNetworkTest, LargeScaleSimulation)
+{
     const int numAgents = 100;
     std::vector<std::shared_ptr<zpr::Agent>> agents;
 
     for (int i = 0; i < numAgents; ++i) {
         auto agent = std::make_shared<zpr::Agent>(i, 20 + (i % 50));
 
-        if (i % 10 == 0) agent->setHealthStatus(zpr::Infected);
-        else if (i % 15 == 0) agent->setHealthStatus(zpr::Sick);
-        else if (i % 100 == 0) agent->setHealthStatus(zpr::Dead);
-        else agent->setHealthStatus(zpr::Healthy);
+        if (i % 10 == 0)
+            agent->setHealthStatus(zpr::Infected);
+        else if (i % 15 == 0)
+            agent->setHealthStatus(zpr::Sick);
+        else if (i % 100 == 0)
+            agent->setHealthStatus(zpr::Dead);
+        else
+            agent->setHealthStatus(zpr::Healthy);
 
         agents.push_back(agent);
         metro1->addPeople(agent);
@@ -357,7 +384,8 @@ TEST_F(CityNetworkTest, LargeScaleSimulation) {
     EXPECT_EQ(metro1->getPeopleCount(), 0);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

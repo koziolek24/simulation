@@ -14,11 +14,12 @@
 
 #include "agents/peoples.h"
 #include "city/city.h"
+#include "disease/disease.h"
 
 namespace zpr {
-class timeManager {
+class TimeManager {
   private:
-    unsigned int hour_ = 0;
+    unsigned int hour_ = 6;
     unsigned int minute_ = 0;
     unsigned int day_ = 0;
 
@@ -29,50 +30,86 @@ class timeManager {
     unsigned int getMinute();
 };
 
-class graphManager {
+class GraphManager {
   private:
     std::vector<std::shared_ptr<zpr::Worker>> allWorkers_;
     std::vector<std::shared_ptr<zpr::Node>> allNodes_;
+    std::map<std::string, std::shared_ptr<zpr::Node>> nodesByName_;
 
   public:
     void addWorker(std::shared_ptr<zpr::Worker> newWorker);
     void addNode(std::shared_ptr<zpr::Node> newNode);
-    std::vector<std::shared_ptr<zpr::Node>> getAllNodes();
-    std::vector<std::shared_ptr<zpr::Worker>> getAllWorkers();
-    std::shared_ptr<zpr::Worker> getWorkerById(unsigned int id);
-    std::shared_ptr<zpr::Node> getNodeById(unsigned int id);
-    std::shared_ptr<zpr::Node> getNodeByName(std::string nodeName);
+    const std::vector<std::shared_ptr<zpr::Node>> getAllNodes();
+    const std::vector<std::shared_ptr<zpr::Worker>> getAllWorkers();
+    const std::shared_ptr<zpr::Worker> getWorkerById(unsigned int id);
+    const std::shared_ptr<zpr::Node> getNodeById(unsigned int id);
+    const std::shared_ptr<zpr::Node> getNodeByName(std::string nodeName);
 };
 
-class graphCreator : public graphManager {
+class GraphCreator : public GraphManager {
   public:
     void connectMetroToMetro(std::string firstStation, std::string secondStation);
     void connectMetroToPlace(std::string stationName, std::shared_ptr<zpr::Place> place);
 };
 
-class graphFinder {
+class GraphFinder {
   private:
     std::map<std::pair<unsigned int, unsigned int>, std::shared_ptr<zpr::Node>> cheapestPath_;
 
   public:
-    std::shared_ptr<zpr::Node> getNextNode(std::shared_ptr<zpr::Node> source,
-                                         std::shared_ptr<zpr::Node> target);
-    void calculateCheapestPath(std::shared_ptr<zpr::Node> node);
+    const std::shared_ptr<zpr::Node> getNextNode(std::shared_ptr<zpr::Node> source,
+                                                 std::shared_ptr<zpr::Node> target);
+    void calculateCheapestPath(std::shared_ptr<zpr::Node> target);
     void calculateAllPaths(std::vector<std::shared_ptr<zpr::Node>> allNodes);
-    std::shared_ptr<zpr::Node> findNearestEntertainment(std::shared_ptr<zpr::Node> position);
-    std::map<std::pair<unsigned int, unsigned int>, unsigned int> getCheapestPath();
+    const std::shared_ptr<zpr::Node> findNearestEntertainment(std::shared_ptr<zpr::Node> position);
 };
 
-class graphTravel : public graphFinder {
+class GraphTravel : public GraphFinder {
   public:
     void moveWorkerToTarget(std::shared_ptr<zpr::Worker> worker, std::shared_ptr<zpr::Node> target);
-    void moveWorkerHome(std::shared_ptr<zpr::Worker> worker);
-    void moveWorkerWorkplace(std::shared_ptr<zpr::Worker> worker);
+    // void moveWorkerHome(std::shared_ptr<zpr::Worker> worker);
+    // void moveWorkerWorkplace(std::shared_ptr<zpr::Worker> worker);
 };
 
-class simulationEngine : public graphCreator, public timeManager, public graphTravel {
+class SimulationEngine : public GraphCreator, public TimeManager, public GraphTravel {
+  private:
+    double severityEntertainment_;
+    double severityWork_;
+    unsigned int workStartHour_;
+    unsigned int workEndHour_;
+    unsigned int entertainmentStartHour_;
+    unsigned int entertainmentEndHour_;
+    unsigned int entertainmentStartToLeaveHour_;
+    double entertainmentGoProbability_;
+    double entertainmentLeaveProbability_;
+    VirusManager virusManager_;
+
   public:
-    simulationEngine() {}
+    SimulationEngine() : severityEntertainment_(0), severityWork_(0) {}
+    void setSeverityEntertainment(double severityEntertainment);
+    void setSeverityWork(double severityWork);
+    void setWorkStartHour(unsigned int hour);
+    void setEntertainmentStartHour(unsigned int hour);
+    void setEntertainmentEndHour(unsigned int hour);
+    void setEntertainmentStartToLeaveHour(unsigned int hour);
+    void setEntertainmentGoProbability(double probability);
+    void setEntertainmentLeaveProbability(double probability);
+    void setVirusManager(VirusManager manager);
+
+    unsigned int getWorkStartHour();
+    unsigned int getEntertainmentStartHour();
+    unsigned int getEntertainmentEndHour();
+    unsigned int getEntertainmentStartToLeaveHour();
+    double getWorkSeverity();
+    double getEntertainmentSeverity();
+    double getEntertainmentGoProbability();
+    double getEntertainmentLeaveProbability();
+    double getMortalityByID(unsigned int id);
+    double getContagiousnessByID(unsigned int id);
+    VirusManager getVirusManager();
+    std::vector<std::shared_ptr<zpr::Symptom>> getSymptoms();
+    std::shared_ptr<Symptom> getInitialSymptom();
+
     void doAction();
     void doWorkerAction(std::shared_ptr<zpr::Worker> worker);
 };

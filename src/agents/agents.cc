@@ -38,4 +38,9 @@ void Agent::setID(unsigned int newID)
 {
     this->id_ = newID;
 }
+
+std::shared_ptr<Virus>& Agent::getVirus()
+{
+    return this->virus_;
+}
 }  // namespace zpr

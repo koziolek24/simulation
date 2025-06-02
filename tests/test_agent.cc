@@ -1,13 +1,16 @@
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <vector>
+
 #include "agents/agents.h"
 #include "agents/peoples.h"
 #include "city/city.h"
 
 class AgentTest : public ::testing::Test {
-protected:
-    void SetUp() override {
+  protected:
+    void SetUp() override
+    {
         agent1 = std::make_shared<zpr::Agent>(1, 25);
         agent2 = std::make_shared<zpr::Agent>(2, 45);
         agent3 = std::make_shared<zpr::Agent>(3, 65);
@@ -16,7 +19,8 @@ protected:
     std::shared_ptr<zpr::Agent> agent1, agent2, agent3;
 };
 
-TEST_F(AgentTest, DefaultConstructor) {
+TEST_F(AgentTest, DefaultConstructor)
+{
     auto agent = std::make_shared<zpr::Agent>(100, 30);
 
     EXPECT_EQ(agent->getID(), 100);
@@ -25,7 +29,8 @@ TEST_F(AgentTest, DefaultConstructor) {
     EXPECT_EQ(agent->getTarget(), zpr::HomeTarget);
 }
 
-TEST_F(AgentTest, ConstructorWithDifferentAges) {
+TEST_F(AgentTest, ConstructorWithDifferentAges)
+{
     auto child = std::make_shared<zpr::Agent>(1, 5);
     auto teenager = std::make_shared<zpr::Agent>(2, 16);
     auto adult = std::make_shared<zpr::Agent>(3, 35);
@@ -47,7 +52,8 @@ TEST_F(AgentTest, ConstructorWithDifferentAges) {
     EXPECT_EQ(senior->getTarget(), zpr::HomeTarget);
 }
 
-TEST_F(AgentTest, IDGetterAndSetter) {
+TEST_F(AgentTest, IDGetterAndSetter)
+{
     EXPECT_EQ(agent1->getID(), 1);
 
     agent1->setID(999);
@@ -60,7 +66,8 @@ TEST_F(AgentTest, IDGetterAndSetter) {
     EXPECT_EQ(agent1->getID(), UINT_MAX);
 }
 
-TEST_F(AgentTest, AgeGetterAndSetter) {
+TEST_F(AgentTest, AgeGetterAndSetter)
+{
     EXPECT_EQ(agent1->getAge(), 25);
 
     agent1->setAge(50);
@@ -73,7 +80,8 @@ TEST_F(AgentTest, AgeGetterAndSetter) {
     EXPECT_EQ(agent1->getAge(), 120);
 }
 
-TEST_F(AgentTest, HealthStatusGetterAndSetter) {
+TEST_F(AgentTest, HealthStatusGetterAndSetter)
+{
     EXPECT_EQ(agent1->getHealthStatus(), zpr::Healthy);
 
     agent1->setHealthStatus(zpr::Infected);
@@ -89,7 +97,8 @@ TEST_F(AgentTest, HealthStatusGetterAndSetter) {
     EXPECT_EQ(agent1->getHealthStatus(), zpr::Healthy);
 }
 
-TEST_F(AgentTest, TargetGetterAndSetter) {
+TEST_F(AgentTest, TargetGetterAndSetter)
+{
     EXPECT_EQ(agent1->getTarget(), zpr::HomeTarget);
 
     agent1->setTarget(zpr::WorkplaceTarget);
@@ -102,7 +111,8 @@ TEST_F(AgentTest, TargetGetterAndSetter) {
     EXPECT_EQ(agent1->getTarget(), zpr::HomeTarget);
 }
 
-TEST_F(AgentTest, MultipleAgentsIndependence) {
+TEST_F(AgentTest, MultipleAgentsIndependence)
+{
     agent1->setID(100);
     agent1->setAge(30);
     agent1->setHealthStatus(zpr::Infected);
@@ -119,7 +129,8 @@ TEST_F(AgentTest, MultipleAgentsIndependence) {
     EXPECT_EQ(agent3->getTarget(), zpr::HomeTarget);
 }
 
-TEST_F(AgentTest, HealthStatusProgression) {
+TEST_F(AgentTest, HealthStatusProgression)
+{
     agent1->setHealthStatus(zpr::Healthy);
     EXPECT_EQ(agent1->getHealthStatus(), zpr::Healthy);
 
@@ -138,7 +149,8 @@ TEST_F(AgentTest, HealthStatusProgression) {
     EXPECT_EQ(agent2->getHealthStatus(), zpr::Dead);
 }
 
-TEST_F(AgentTest, DailyRoutineTargets) {
+TEST_F(AgentTest, DailyRoutineTargets)
+{
     agent1->setTarget(zpr::WorkplaceTarget);
     EXPECT_EQ(agent1->getTarget(), zpr::WorkplaceTarget);
 
@@ -153,8 +165,9 @@ TEST_F(AgentTest, DailyRoutineTargets) {
 // Worker Class Unit Tests
 // ============================================================================
 class WorkerTest : public ::testing::Test {
-protected:
-    void SetUp() override {
+  protected:
+    void SetUp() override
+    {
         metro1 = std::make_shared<zpr::Metro>(1, "Metro Station 1");
         metro2 = std::make_shared<zpr::Metro>(2, "Metro Station 2");
         home1 = std::make_shared<zpr::Home>(3, "Home 1");
@@ -172,7 +185,8 @@ protected:
     std::shared_ptr<zpr::Worker> worker1, worker2;
 };
 
-TEST_F(WorkerTest, ConstructorAndInheritance) {
+TEST_F(WorkerTest, ConstructorAndInheritance)
+{
     EXPECT_EQ(worker1->getID(), 10);
     EXPECT_EQ(worker1->getAge(), 30);
     EXPECT_EQ(worker1->getHealthStatus(), zpr::Healthy);
@@ -191,7 +205,8 @@ TEST_F(WorkerTest, ConstructorAndInheritance) {
     EXPECT_EQ(position->getID(), metro1->getID());
 }
 
-TEST_F(WorkerTest, InheritedAgentFunctionality) {
+TEST_F(WorkerTest, InheritedAgentFunctionality)
+{
     worker1->setID(100);
     worker1->setAge(40);
     worker1->setHealthStatus(zpr::Infected);
@@ -203,7 +218,8 @@ TEST_F(WorkerTest, InheritedAgentFunctionality) {
     EXPECT_EQ(worker1->getTarget(), zpr::WorkplaceTarget);
 }
 
-TEST_F(WorkerTest, HomeGetterAndSetter) {
+TEST_F(WorkerTest, HomeGetterAndSetter)
+{
     auto initialHome = worker1->getHome().lock();
     EXPECT_EQ(initialHome->getID(), home1->getID());
 
@@ -212,7 +228,8 @@ TEST_F(WorkerTest, HomeGetterAndSetter) {
     EXPECT_EQ(newHome->getID(), home2->getID());
 }
 
-TEST_F(WorkerTest, WorkplaceGetterAndSetter) {
+TEST_F(WorkerTest, WorkplaceGetterAndSetter)
+{
     auto initialWorkplace = worker1->getWorkplace().lock();
     EXPECT_EQ(initialWorkplace->getID(), workplace1->getID());
 
@@ -221,7 +238,8 @@ TEST_F(WorkerTest, WorkplaceGetterAndSetter) {
     EXPECT_EQ(newWorkplace->getID(), workplace2->getID());
 }
 
-TEST_F(WorkerTest, PositionGetterAndSetter) {
+TEST_F(WorkerTest, PositionGetterAndSetter)
+{
     auto initialPosition = worker1->getPosition().lock();
     EXPECT_EQ(initialPosition->getID(), metro1->getID());
 
@@ -234,7 +252,8 @@ TEST_F(WorkerTest, PositionGetterAndSetter) {
     EXPECT_EQ(workPosition->getID(), workplace1->getID());
 }
 
-TEST_F(WorkerTest, MultipleWorkersIndependence) {
+TEST_F(WorkerTest, MultipleWorkersIndependence)
+{
     worker1->setID(200);
     worker1->setAge(50);
     worker1->setHealthStatus(zpr::Sick);
@@ -255,7 +274,8 @@ TEST_F(WorkerTest, MultipleWorkersIndependence) {
     EXPECT_EQ(worker2Position->getID(), home2->getID());
 }
 
-TEST_F(WorkerTest, WorkerLifecycleSimulation) {
+TEST_F(WorkerTest, WorkerLifecycleSimulation)
+{
     worker1->setPosition(home1);
     worker1->setTarget(zpr::HomeTarget);
 
@@ -288,7 +308,8 @@ TEST_F(WorkerTest, WorkerLifecycleSimulation) {
     EXPECT_EQ(worker1->getTarget(), zpr::HomeTarget);
 }
 
-TEST_F(WorkerTest, WeakPointerSafety) {
+TEST_F(WorkerTest, WeakPointerSafety)
+{
     std::shared_ptr<zpr::Worker> testWorker;
 
     {
@@ -332,7 +353,8 @@ TEST_F(WorkerTest, WeakPointerSafety) {
     EXPECT_FALSE(testWorker->getPosition().expired());
 }
 
-TEST_F(WorkerTest, JobChangeScenario) {
+TEST_F(WorkerTest, JobChangeScenario)
+{
     auto initialWorkplace = worker1->getWorkplace().lock();
     EXPECT_EQ(initialWorkplace->getID(), workplace1->getID());
 
@@ -349,7 +371,8 @@ TEST_F(WorkerTest, JobChangeScenario) {
     EXPECT_EQ(currentPos->getID(), home2->getID());
 }
 
-TEST_F(WorkerTest, WorkerHealthAndMovement) {
+TEST_F(WorkerTest, WorkerHealthAndMovement)
+{
     EXPECT_EQ(worker1->getHealthStatus(), zpr::Healthy);
     worker1->setPosition(workplace1);
     worker1->setTarget(zpr::WorkplaceTarget);
@@ -380,8 +403,9 @@ TEST_F(WorkerTest, WorkerHealthAndMovement) {
 // Integration Tests: Agent and Worker interaction
 // ============================================================================
 class AgentWorkerIntegrationTest : public ::testing::Test {
-protected:
-    void SetUp() override {
+  protected:
+    void SetUp() override
+    {
         metro = std::make_shared<zpr::Metro>(1, "Central Metro");
         home = std::make_shared<zpr::Home>(2, "Family Home");
         workplace = std::make_shared<zpr::Workplace>(3, "Office", 9, 17);
@@ -398,7 +422,8 @@ protected:
     std::shared_ptr<zpr::Worker> worker;
 };
 
-TEST_F(AgentWorkerIntegrationTest, MixedAgentTypes) {
+TEST_F(AgentWorkerIntegrationTest, MixedAgentTypes)
+{
     regularAgent->setHealthStatus(zpr::Healthy);
     worker->setHealthStatus(zpr::Healthy);
     youngAgent->setHealthStatus(zpr::Healthy);
@@ -416,7 +441,8 @@ TEST_F(AgentWorkerIntegrationTest, MixedAgentTypes) {
     EXPECT_EQ(workerWorkplace->getID(), workplace->getID());
 }
 
-TEST_F(AgentWorkerIntegrationTest, AgeBasedBehavior) {
+TEST_F(AgentWorkerIntegrationTest, AgeBasedBehavior)
+{
     EXPECT_EQ(regularAgent->getAge(), 65);
     EXPECT_EQ(worker->getAge(), 35);
     EXPECT_EQ(youngAgent->getAge(), 16);
@@ -430,7 +456,8 @@ TEST_F(AgentWorkerIntegrationTest, AgeBasedBehavior) {
     EXPECT_EQ(youngAgent->getTarget(), zpr::HomeTarget);
 }
 
-TEST_F(AgentWorkerIntegrationTest, InfectionSpreadScenario) {
+TEST_F(AgentWorkerIntegrationTest, InfectionSpreadScenario)
+{
     regularAgent->setHealthStatus(zpr::Infected);
     worker->setHealthStatus(zpr::Healthy);
     youngAgent->setHealthStatus(zpr::Healthy);
@@ -453,7 +480,8 @@ TEST_F(AgentWorkerIntegrationTest, InfectionSpreadScenario) {
 // ============================================================================
 // Edge Cases and Stress Tests
 // ============================================================================
-TEST_F(AgentTest, EdgeCaseIDs) {
+TEST_F(AgentTest, EdgeCaseIDs)
+{
     auto agent = std::make_shared<zpr::Agent>(0, 25);
     EXPECT_EQ(agent->getID(), 0);
 
@@ -461,7 +489,8 @@ TEST_F(AgentTest, EdgeCaseIDs) {
     EXPECT_EQ(agent->getID(), UINT_MAX);
 }
 
-TEST_F(AgentTest, EdgeCaseAges) {
+TEST_F(AgentTest, EdgeCaseAges)
+{
     auto agent = std::make_shared<zpr::Agent>(1, 0);
     EXPECT_EQ(agent->getAge(), 0);
 
@@ -469,7 +498,8 @@ TEST_F(AgentTest, EdgeCaseAges) {
     EXPECT_EQ(agent->getAge(), UINT_MAX);
 }
 
-TEST_F(AgentTest, RapidStateChanges) {
+TEST_F(AgentTest, RapidStateChanges)
+{
     for (unsigned int i = 0; i < 100; ++i) {
         agent1->setID(i);
         agent1->setAge(i % 100);
@@ -483,7 +513,8 @@ TEST_F(AgentTest, RapidStateChanges) {
     }
 }
 
-TEST_F(WorkerTest, RapidLocationChanges) {
+TEST_F(WorkerTest, RapidLocationChanges)
+{
     std::vector<std::shared_ptr<zpr::Node>> locations = {home1, metro1, workplace1, metro2, home2};
 
     for (int i = 0; i < 50; ++i) {
@@ -495,7 +526,8 @@ TEST_F(WorkerTest, RapidLocationChanges) {
     }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

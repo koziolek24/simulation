@@ -12,10 +12,12 @@
 #define CITY_H
 #include <SFML/System/Vector2.hpp>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include "agents/agents.h"
+#include "visitors/NodeVisitor.h"
 namespace zpr {
 
 enum nodeType { nodeType, metroType, homeType, workplaceType, entertainmentType };
@@ -25,6 +27,7 @@ class Node {
     std::vector<std::weak_ptr<zpr::Agent>> presentPeople_;
     std::string name_;
     enum nodeType type_;
+    std::mutex nodeMutex_;
 
   public:
     Node(unsigned int id, std::string newName, enum nodeType type = nodeType)
@@ -32,7 +35,7 @@ class Node {
     {
     }
     virtual ~Node() = default;
-    std::vector<std::weak_ptr<zpr::Agent>> getPeople();
+    const std::vector<std::weak_ptr<zpr::Agent>> getPeople();
     void addPeople(const std::shared_ptr<zpr::Agent>& newAgent);
     void removePeople(const std::shared_ptr<zpr::Agent>& agentToRemove);
     std::string getName();
@@ -40,15 +43,18 @@ class Node {
     unsigned int getHealthyCount();
     unsigned int getPeopleCount();
     unsigned int getID();
-    std::string getNodeType();
+    enum nodeType getNodeType();
+    std::mutex& getMutex();
 
     void setID(unsigned int newID);
     void setName(std::string newName);
 
-    virtual std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() = 0;
+    virtual const std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() = 0;
 
     sf::Vector2f pos_{0.f, 0.f};
     sf::Vector2f vel_{0.f, 0.f};
+
+    virtual void accept(NodeVisitor& visitor) = 0;
 
     bool operator==(Node& node);
 };
@@ -61,9 +67,11 @@ class Metro : public Node {
         : Node(id, newName, type), connectedNodes_()
     {
     }
-    std::vector<std::weak_ptr<zpr::Node>> getConnectedNodes();
+    const std::vector<std::weak_ptr<zpr::Node>> getConnectedNodes();
     void addConnection(const std::shared_ptr<zpr::Node>& newNode);
-    std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() override;
+    const std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() override;
+
+    void accept(NodeVisitor& visitor) override;
 };
 
 class Place : public Node {
@@ -76,8 +84,10 @@ class Place : public Node {
     {
     }
     void addConnectingStation(const std::shared_ptr<zpr::Metro>& connectingStation);
-    std::weak_ptr<zpr::Metro> getConnecingStation();
-    std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() override;
+    const std::weak_ptr<zpr::Metro> getConnecingStation();
+    const std::vector<std::weak_ptr<zpr::Node>> getAllNeighbours() override;
+
+    void accept(NodeVisitor& visitor) override;
 };
 
 class Workplace : public Place {
@@ -95,10 +105,12 @@ class Workplace : public Place {
     unsigned int getClosingHour();
     void setOpeningHour(unsigned int newOpeningHour);
     void setClosingHour(unsigned int newClosingHour);
+
+    void accept(NodeVisitor& visitor) override;
 };
 class Home : public Place {
   private:
-    std::vector<std::weak_ptr<zpr::Agent>> PeopleLivingHere_;
+    std::vector<std::weak_ptr<zpr::Agent>> peopleLivingHere_;
 
   public:
     Home(unsigned int id, std::string newName, enum nodeType type = homeType)
@@ -106,7 +118,9 @@ class Home : public Place {
     {
     }
     void addPeopleLivingHere(std::shared_ptr<zpr::Agent> newPeople);
-    std::vector<std::weak_ptr<zpr::Agent>> getPeopleLivingHere();
+    const std::vector<std::weak_ptr<zpr::Agent>> getPeopleLivingHere();
+
+    void accept(NodeVisitor& visitor) override;
 };
 
 class Entertainment : public Place {
@@ -115,7 +129,8 @@ class Entertainment : public Place {
         : Place(id, newName, type)
     {
     }
+
+    void accept(NodeVisitor& visitor) override;
 };
-// std::vector<std::weak_ptr<zpr::Node>> collectNeighbours(const std::shared_ptr<zpr::Node>& n);
 }  // namespace zpr
 #endif

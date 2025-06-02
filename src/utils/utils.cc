@@ -5,15 +5,17 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <ostream>
+#include <vector>
 
 #include "agents/peoples.h"
 #include "city/city.h"
+#include "disease/disease.h"
 #include "simulation/engine.h"
 using json = nlohmann::json;
 
 using namespace zpr;
 
-void reader::writeNodes(json& data)
+void Reader::writeNodes(json& data)
 {
     unsigned int id = 0;
 
@@ -87,10 +89,9 @@ void reader::writeNodes(json& data)
     data["WorkplaceNumber"] = workplaces;
     data["EntertainmentNumber"] = entertainments;
     data["nodeNumber"] = id;
-    return;
 }
 
-void reader::writeConnections(json& data)
+void Reader::writeConnections(json& data)
 {
     std::cout << "Write numer of connections between metro stations" << std::endl;
     unsigned int connections;
@@ -102,10 +103,9 @@ void reader::writeConnections(json& data)
         data["Connections"].push_back({{"stationA", stationA}, {"stationB", stationB}});
     }
     data["ConnectionNumber"] = connections;
-    return;
 }
 
-void reader::writeWorkers(json& data)
+void Reader::writeWorkers(json& data)
 {
     unsigned int id = 0;
     std::cout << "Write numer of Workers" << std::endl;
@@ -125,15 +125,10 @@ void reader::writeWorkers(json& data)
             {{"id", id}, {"age", age}, {"home", home}, {"workplace", workplace}});
         ++id;
     }
-    // if added another class of worker write them here
-    //
-    //
-    data["WorkerNumber"] = workers;
     data["WorkerNumber"] = id;
-    return;
 }
 
-void reader::writeJsonStructure(const std::string path)
+void Reader::writeJsonStructure(const std::string path)
 {
     std::ofstream file(path, std::ios::out | std::ios::trunc);
     if (!file.is_open()) {
@@ -146,14 +141,196 @@ void reader::writeJsonStructure(const std::string path)
     data["Nodes"] = {{"Home", {}}, {"Workplace", {}}, {"Metro", {}}, {"Entertainment", {}}};
     data["Connections"] = {};
     data["Workers"] = {{"Worker", {}}};
-    reader::writeNodes(data);
-    reader::writeConnections(data);
-    reader::writeWorkers(data);
+    std::cin >> data["SeverityEntertainment"];
+    std::cin >> data["SeverityWork"];
+    std::cin >> data["WorkStartHour"];
+    std::cin >> data["EntertainmentStartHour"];
+    std::cin >> data["EntertainmentEndHour"];
+    std::cin >> data["EntertainmentStartToLeaveHour"];
+    std::cin >> data["EntertainmentGoProbability"];
+    std::cin >> data["EntertainmentLeaveProbability"];
+    std::cout << "Next data" << std::endl;
+    Reader::writeNodes(data);
+    Reader::writeConnections(data);
+    Reader::writeWorkers(data);
     file << data.dump(4) << std::endl;
     file.close();
 }
 
-void reader::readJsonStructure(const std::string path, zpr::simulationEngine& engine)
+void Reader::readJsonStructure(const std::string path, zpr::SimulationEngine& engine)
+{
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cout << "File doesn't exist" << std::endl;
+        return;
+    }
+    json data = json::parse(file);
+
+    double severityEntertainment = data["SeverityEntertainment"];
+    double severityWork = data["SeverityWork"];
+    unsigned int workStartHour = data["WorkStartHour"];
+    unsigned int entertainmentStartHour = data["EntertainmentStartHour"];
+    unsigned int entertainmentEndHour = data["EntertainmentEndHour"];
+    unsigned int entertainmentStartToLeaveHour = data["EntertainmentStartToLeaveHour"];
+    double entertainmentGoProbability = data["EntertainmentGoProbability"];
+    double entertainmentLeaveProbability = data["EntertainmentLeaveProbability"];
+    engine.setSeverityEntertainment(severityEntertainment);
+    engine.setSeverityWork(severityWork);
+    engine.setWorkStartHour(workStartHour);
+    engine.setEntertainmentStartHour(entertainmentStartHour);
+    engine.setEntertainmentEndHour(entertainmentEndHour);
+    engine.setEntertainmentStartToLeaveHour(entertainmentStartToLeaveHour);
+    engine.setEntertainmentGoProbability(entertainmentGoProbability);
+    engine.setEntertainmentLeaveProbability(entertainmentLeaveProbability);
+    // Metro
+    int metros = data["MetroNumber"];
+    for (int i = 0; i < metros; ++i) {
+        unsigned int id = data["Nodes"]["Metro"][static_cast<std::size_t>(i)]["id"];
+        std::string name = data["Nodes"]["Metro"][static_cast<std::size_t>(i)]["name"];
+        engine.addNode(std::make_shared<zpr::Metro>(id, name));
+    }
+
+    // Home
+    int homes = data["HomeNumber"];
+    for (int i = 0; i < homes; ++i) {
+        unsigned int id = data["Nodes"]["Home"][static_cast<std::size_t>(i)]["id"];
+        std::string name = data["Nodes"]["Home"][static_cast<std::size_t>(i)]["name"];
+        std::string metroName =
+            data["Nodes"]["Home"][static_cast<std::size_t>(i)]["connectedMetro"];
+        auto sHome = std::make_shared<zpr::Home>(id, name);
+        engine.addNode(sHome);
+        engine.connectMetroToPlace(metroName, sHome);
+    }
+
+    // Workplace
+    int workplaces = data["WorkplaceNumber"];
+    for (int i = 0; i < workplaces; ++i) {
+        unsigned int id = data["Nodes"]["Workplace"][static_cast<std::size_t>(i)]["id"];
+        std::string name = data["Nodes"]["Workplace"][static_cast<std::size_t>(i)]["name"];
+        std::string metroName =
+            data["Nodes"]["Workplace"][static_cast<std::size_t>(i)]["connectedMetro"];
+        unsigned int openingHour =
+            data["Nodes"]["Workplace"][static_cast<std::size_t>(i)]["openingHour"];
+        unsigned int closingHour =
+            data["Nodes"]["Workplace"][static_cast<std::size_t>(i)]["closingHour"];
+        auto sWorkplace = std::make_shared<zpr::Workplace>(id, name, openingHour, closingHour);
+        engine.addNode(sWorkplace);
+        engine.connectMetroToPlace(metroName, sWorkplace);
+    }
+
+    // Entertainment
+    int entertainments = data["EntertainmentNumber"];
+    for (int i = 0; i < entertainments; ++i) {
+        unsigned int id = data["Nodes"]["Entertainment"][static_cast<std::size_t>(i)]["id"];
+        std::string name = data["Nodes"]["Entertainment"][static_cast<std::size_t>(i)]["name"];
+        std::string metroName =
+            data["Nodes"]["Entertainment"][static_cast<std::size_t>(i)]["connectedMetro"];
+        auto sEntertainment = std::make_shared<zpr::Entertainment>(id, name);
+        engine.addNode(sEntertainment);
+        engine.connectMetroToPlace(metroName, sEntertainment);
+    }
+
+    // Connections
+    int connections = data["ConnectionNumber"];
+    for (int i = 0; i < connections; ++i) {
+        std::string stationA = data["Connections"][static_cast<std::size_t>(i)]["stationA"];
+        std::string stationB = data["Connections"][static_cast<std::size_t>(i)]["stationB"];
+        engine.connectMetroToMetro(stationA, stationB);
+    }
+
+    // Workers
+    int workers = data["WorkerNumber"];
+    for (int i = 0; i < workers; ++i) {
+        unsigned int id = data["Workers"]["Worker"][static_cast<std::size_t>(i)]["id"];
+        unsigned int age = data["Workers"]["Worker"][static_cast<std::size_t>(i)]["age"];
+        std::string home = data["Workers"]["Worker"][static_cast<std::size_t>(i)]["home"];
+        std::string workplace = data["Workers"]["Worker"][static_cast<std::size_t>(i)]["workplace"];
+        auto sHome = std::dynamic_pointer_cast<zpr::Home>(engine.getNodeByName(home));
+        auto sWorkplace =
+            std::dynamic_pointer_cast<zpr::Workplace>(engine.getNodeByName(workplace));
+        auto sWorker = std::make_shared<zpr::Worker>(id, age, sHome, sHome, sWorkplace);
+        engine.addWorker(sWorker);
+        sHome->addPeopleLivingHere(sWorker);
+        sHome->addPeople(sWorker);
+    }
+}
+
+void Reader::writeViruses(const std::string path)
+{
+    std::ofstream file(path, std::ios::out | std::ios::trunc);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << path << std::endl;
+        return;
+    }
+    json data;
+    std::cout << "Write number of symptoms" << std::endl;
+    unsigned int symptoms;
+    std::cin >> symptoms;
+    data["SymptomsNumber"] = symptoms;
+    unsigned int symptomID = 1;
+    for (unsigned int i = 0; i < symptoms; ++i) {
+        std::cout << "Write name of the symptom" << std::endl;
+        std::string symptomName;
+        std::cin >> symptomName;
+        std::cout << "Write symptom severity" << std::endl;
+        double severity;
+        std::cin >> severity;
+        std::cout << "Write number of dependables" << std::endl;
+        unsigned int dependableNumber;
+        std::cin >> dependableNumber;
+        std::vector<std::string> dependables;
+        for (unsigned int j = 0; j < dependableNumber; ++j) {
+            std::cout << "Write name of dependable" << std::endl;
+            std::string dependableName;
+            std::cin >> dependableName;
+            dependables.push_back(dependableName);
+        }
+        unsigned int dependableDataCount = 1 << dependableNumber;
+        std::vector<double> evolutionProbabilities;
+        for (unsigned int j = 0; j < dependableDataCount; ++j) {
+            std::cout << "Write probability";
+            double probability;
+            std::cin >> probability;
+            evolutionProbabilities.push_back(probability);
+        }
+        data["Symptoms"].push_back({{"name", symptomName},
+                                    {"id", symptomID},
+                                    {"severity", severity},
+                                    {"DependableNumber", dependableNumber},
+                                    {"Dependables", dependables},
+                                    {"EvolutionProbabilities", evolutionProbabilities}});
+        symptomID <<= 1;
+    }
+    unsigned int initialSymptomNumber;
+    std::cin >> initialSymptomNumber;
+    std::vector<std::string> initialSymptoms;
+    data["InitialSymptomsNumber"] = initialSymptomNumber;
+    for (unsigned int i = 0; i < initialSymptomNumber; ++i) {
+        std::string symptom;
+        std::cin >> symptom;
+        initialSymptoms.push_back(symptom);
+    }
+    data["InitialSymptoms"] = initialSymptoms;
+
+    unsigned int dataCount = 1 << symptoms;
+    data["Contagiousness"].push_back({{"id", 0}, {"contagiousness", (double)0}});
+    data["Mortality"].push_back({{"id", 0}, {"mortality", (double)0}});
+    for (unsigned int i = 1; i < dataCount; ++i) {
+        std::cout << "Write contagiousness" << std::endl;
+        double contagiousness;
+        std::cin >> contagiousness;
+        std::cout << "Write mortality" << std::endl;
+        double mortality;
+        std::cin >> mortality;
+        data["Contagiousness"].push_back({{"id", i}, {"contagiousness", contagiousness}});
+        data["Mortality"].push_back({{"id", i}, {"mortality", mortality}});
+    }
+    file << data.dump(4) << std::endl;
+    file.close();
+    return;
+}
+
+void Reader::readViruses(const std::string path, zpr::VirusManager& virusManager)
 {
     std::ifstream file(path);
     if (!file.is_open()) {
@@ -161,79 +338,36 @@ void reader::readJsonStructure(const std::string path, zpr::simulationEngine& en
         return;
     }
     json data = json::parse(file);
-
-    // metro Stations
-    int metros = data["MetroNumber"];
-    for (int i = 0; i < metros; ++i) {
-        int id = data["Nodes"]["Metro"][(long unsigned int)(i)]["id"];
-        std::string name = data["Nodes"]["Metro"][(long unsigned int)(i)]["name"];
-        zpr::Metro metroStation = zpr::Metro((unsigned int)(id), name);
-        engine.addNode(std::make_shared<zpr::Metro>(metroStation));
+    unsigned int symptomsNumber = data["SymptomsNumber"];
+    for (unsigned int i = 0; i < symptomsNumber; ++i) {
+        unsigned int id = data["Symptoms"][i]["id"];
+        std::string name = data["Symptoms"][i]["name"];
+        double severity = data["Symptoms"][i]["severity"];
+        std::shared_ptr<zpr::Symptom> sSymptom =
+            std::make_shared<zpr::Symptom>(zpr::Symptom(id, name, severity));
+        virusManager.addSymptom(sSymptom);
+        unsigned int dependableNumber = data["Symptoms"][i]["DependableNumber"];
+        for (unsigned int j = 0; j < dependableNumber; ++j) {
+            std::string newDependable = data["Symptoms"][i]["Dependables"][j];
+            sSymptom->addDependable(newDependable);
+        }
+        unsigned int dependableDataCount = 1 << dependableNumber;
+        for (unsigned int j = 0; j < dependableDataCount; ++j) {
+            double probability = data["Symptoms"][i]["EvolutionProbabilities"][j];
+            sSymptom->addEvolveProbability(probability);
+        }
     }
-
-    // homes
-    int homes = data["HomeNumber"];
-    for (int i = 0; i < homes; ++i) {
-        unsigned int id = data["Nodes"]["Home"][(long unsigned int)(i)]["id"];
-        std::string name = data["Nodes"]["Home"][(long unsigned int)(i)]["name"];
-        std::string metroName = data["Nodes"]["Home"][(long unsigned int)(i)]["connectedMetro"];
-        zpr::Home home = zpr::Home(id, name);
-        std::shared_ptr<zpr::Home> sHome = std::make_shared<zpr::Home>(home);
-        engine.addNode(sHome);
-        engine.connectMetroToPlace(metroName, sHome);
+    unsigned int dataCount = 1 << symptomsNumber;
+    for (unsigned int i = 0; i < dataCount; ++i) {
+        double mortality = data["Mortality"][i]["mortality"];
+        double contagiousness = data["Contagiousness"][i]["contagiousness"];
+        virusManager.addMortality(mortality);
+        virusManager.addContagiousness(contagiousness);
     }
-    int workplaces = data["WorkplaceNumber"];
-    for (int i = 0; i < workplaces; ++i) {
-        unsigned int id = data["Nodes"]["Workplace"][(long unsigned int)(i)]["id"];
-        std::string name = data["Nodes"]["Workplace"][(long unsigned int)(i)]["name"];
-        std::string metroName =
-            data["Nodes"]["Workplace"][(long unsigned int)(i)]["connectedMetro"];
-        unsigned int openingHour =
-            data["Nodes"]["Workplace"][(long unsigned int)(i)]["openingHour"];
-        unsigned int closingHour =
-            data["Nodes"]["Workplace"][(long unsigned int)(i)]["closingHour"];
-        zpr::Workplace workplace = zpr::Workplace(id, name, openingHour, closingHour);
-        std::shared_ptr<zpr::Workplace> sWorkplace = std::make_shared<zpr::Workplace>(workplace);
-        engine.addNode(sWorkplace);
-        engine.connectMetroToPlace(metroName, sWorkplace);
-    }
-
-    int entertainments = data["EntertainmentNumber"];
-    for (int i = 0; i < entertainments; ++i) {
-        unsigned int id = data["Nodes"]["Entertainment"][(long unsigned int)(i)]["id"];
-        std::string name = data["Nodes"]["Entertainment"][(long unsigned int)(i)]["name"];
-        std::string metroName =
-            data["Nodes"]["Entertainment"][(long unsigned int)(i)]["connectedMetro"];
-        zpr::Entertainment entertainment = zpr::Entertainment(id, name);
-        std::shared_ptr<zpr::Entertainment> sEntertainment =
-            std::make_shared<zpr::Entertainment>(entertainment);
-        engine.addNode(sEntertainment);
-        engine.connectMetroToPlace(metroName, sEntertainment);
-    }
-
-    int connections = data["ConnectionNumber"];
-    for (int i = 0; i < connections; ++i) {
-        std::string stationA = data["Connections"][(long unsigned int)(i)]["stationA"];
-        std::string stationB = data["Connections"][(long unsigned int)(i)]["stationB"];
-        engine.connectMetroToMetro(stationA, stationB);
-    }
-
-    // Workers
-    int workers = data["WorkerNumber"];
-    for (int i = 0; i < workers; ++i) {
-        std::string home = data["Workers"]["Worker"][(long unsigned int)(i)]["home"];
-        std::string workplace = data["Workers"]["Worker"][(long unsigned int)(i)]["workplace"];
-        unsigned int id = data["Workers"]["Worker"][(long unsigned int)(i)]["id"];
-        unsigned int age = data["Workers"]["Worker"][(long unsigned int)(i)]["age"];
-        std::shared_ptr<zpr::Home> sHome =
-            std::dynamic_pointer_cast<zpr::Home>(engine.getNodeByName(home));
-        std::shared_ptr<zpr::Workplace> sWorkplace =
-            std::dynamic_pointer_cast<zpr::Workplace>(engine.getNodeByName(workplace));
-        zpr::Worker worker = zpr::Worker(id, age, sHome, sHome, sWorkplace);
-        std::shared_ptr<zpr::Worker> sWorker = std::make_shared<zpr::Worker>(worker);
-        engine.addWorker(sWorker);
-        sHome->addPeopleLivingHere(sWorker);
-        sHome->addPeople(sWorker);
+    unsigned int initialSymptomsNumber = data["InitialSymptomsNumber"];
+    for (unsigned int i = 0; i < initialSymptomsNumber; ++i) {
+        std::string initial = data["InitialSymptoms"][i];
+        virusManager.addInitialSymptom(virusManager.getSymptomByName(initial));
     }
     return;
 }

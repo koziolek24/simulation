@@ -6,20 +6,23 @@
 
 #include <nlohmann/json.hpp>
 
+#include "disease/disease.h"
 #include "simulation/engine.h"
 using json = nlohmann::json;
 
 namespace zpr {
-class reader {
+class Reader {
   public:
-    void readStructure(const std::string path, zpr::simulationEngine& engine);
-    void readJsonStructure(const std::string path, zpr::simulationEngine& engine);
+    void readStructure(const std::string path, zpr::SimulationEngine& engine);
+    void readJsonStructure(const std::string path, zpr::SimulationEngine& engine);
     void writeJsonStructure(const std::string path);
     void readProbabilities();
+    void readViruses(const std::string path, zpr::VirusManager& virusManager);
 
     void writeNodes(json& data);
     void writeWorkers(json& data);
     void writeConnections(json& data);
+    void writeViruses(const std::string path);
 };
 }  // namespace zpr
 

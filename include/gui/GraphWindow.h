@@ -10,13 +10,13 @@
 
 #include "GraphLayout.h"
 #include "city/city.h"
+#include "simulation/engine.h"
 
 namespace zpr {
 class GraphWindow {
   public:
     GraphWindow() = default;
-    bool init(const std::vector<std::shared_ptr<zpr::Node>>& nodes, float viewSize = 1600.f,
-              float scale = 1.4f, float spring = 6.f);
+    bool init(const std::shared_ptr<SimulationEngine>& engine);
     int run();
 
     ~GraphWindow() = default;
@@ -25,19 +25,20 @@ class GraphWindow {
     void processEvents();
     void render();
 
-    void autoFitScale(float margin = 24.f);
+    void autoFitScale();
 
     std::vector<std::shared_ptr<zpr::Node>> nodes_;
-    zpr::GraphLayout layout_{400.f};
+    std::shared_ptr<zpr::SimulationEngine> engine_;
+    std::unique_ptr<zpr::GraphLayout> layout_;
 
     sf::RenderWindow window_;
     sf::Font font_;
     std::optional<sf::Text> stats_;
 
-    float view_ = 400.f;
-    float scale_ = 1.4f;
+    float view_;
+    float scale_;
     sf::Vector2f offset_{0.f, 0.f};
-    const float radius_ = 18.f;
+    const float radius_ = 18.f;  // size of node
 
     // for displaying info in popup
     std::weak_ptr<zpr::Node> current_;

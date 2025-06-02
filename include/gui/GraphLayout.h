@@ -12,7 +12,7 @@
 namespace zpr {
 class GraphLayout {
   public:
-    GraphLayout(float areaSide, float spring = 80.f, float cooling = 0.96f);
+    GraphLayout(float areaSide, float spring, float cooling);
 
     bool iterate(const std::vector<std::shared_ptr<zpr::Node>>& nodes);
 

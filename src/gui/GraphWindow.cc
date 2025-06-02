@@ -2,46 +2,19 @@
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Window/Event.hpp>
+#include <algorithm>
 #include <array>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
+#include <memory>
+#include <sstream>
 
+#include "SFML/System/Vector2.hpp"
 #include "city/city.h"
+#include "visitors/ShapeMakerVisitor.h"
 
-static std::unique_ptr<sf::Shape> makeShapeFor(const std::shared_ptr<zpr::Node>& n, float radius)
-{
-    using namespace zpr;
-
-    if (dynamic_cast<Home*>(n.get())) {
-        auto s = std::make_unique<sf::CircleShape>(radius);
-        s->setOrigin({radius, radius});
-        return s;
-    }
-    if (dynamic_cast<Metro*>(n.get())) {
-        auto s = std::make_unique<sf::RectangleShape>(sf::Vector2f(radius * 2.f, radius * 2.f));
-        s->setOrigin({radius, radius});
-        return s;
-    }
-    if (dynamic_cast<Workplace*>(n.get())) {
-        auto t = std::make_unique<sf::ConvexShape>(3);
-        t->setPoint(0, {0.f, -radius});
-        t->setPoint(1, {radius, radius});
-        t->setPoint(2, {-radius, radius});
-        t->setOrigin({0.f, 0.f});
-        return t;
-    }
-
-    auto h = std::make_unique<sf::CircleShape>(radius, 6);
-    h->setOrigin({radius, radius});
-    return h;
-}
-
-static float length(sf::Vector2f v)
-{
-    return std::sqrt(v.x * v.x + v.y * v.y);
-}
-
-void zpr::GraphWindow::autoFitScale(float margin)
+void zpr::GraphWindow::autoFitScale()
 {
     if (nodes_.empty())
         return;
@@ -57,7 +30,7 @@ void zpr::GraphWindow::autoFitScale(float margin)
     }
     sf::Vector2f span = maxPos - minPos;
 
-    const float halfW = view_ * 0.5f - margin;
+    const float halfW = view_ * 0.5f - view_ * 0.05f;
     const float sx = span.x > 0.f ? halfW / (span.x * 0.5f) : 1.f;
     const float sy = span.y > 0.f ? halfW / (span.y * 0.5f) : 1.f;
     scale_ = std::min(sx, sy);
@@ -66,17 +39,23 @@ void zpr::GraphWindow::autoFitScale(float margin)
     offset_ = -worldCentre * scale_;
 }
 
-bool zpr::GraphWindow::init(const std::vector<std::shared_ptr<zpr::Node>>& nodes, float view,
-                            float scale, float spring)
+bool zpr::GraphWindow::init(const std::shared_ptr<SimulationEngine>& engine)
 {
-    view_ = view;
-    scale_ = scale;
-    layout_ = GraphLayout(0.75f * view, spring);
-    nodes_ = nodes;
+    engine_ = engine;
+    nodes_ = engine->getAllNodes();
+    size_t N = nodes_.size();
+    float n = static_cast<float>(N);
+    view_ = std::clamp(200.f + std::sqrt(n) * 50.f, 400.f, 1200.f);
+    scale_ = std::clamp(1.2f + n * 0.005f, 1.0f, 10.0f);
+
+    float spring = std::clamp(1.f + std::log(n + 1) * 2.f, 1.f, 10.f);
+    float cooling = 0.96f;
+
+    layout_ = std::make_unique<zpr::GraphLayout>(zpr::GraphLayout(view_ * scale_, spring, cooling));
 
     const float R0 = 30.f;
     for (unsigned int i = 0; i < nodes_.size(); ++i) {
-        float a = (float)(i)*2.f * 3.14159265f / (float)(nodes_.size());
+        float a = (float)(i)*2.f * static_cast<float>(M_PI) / (float)(nodes_.size());
         nodes_[i]->pos_ = {std::cos(a) * R0, std::sin(a) * R0};
     }
 
@@ -85,7 +64,7 @@ bool zpr::GraphWindow::init(const std::vector<std::shared_ptr<zpr::Node>>& nodes
     int iterations = 0;
 
     while (maxVel.x > threshold || maxVel.y > threshold) {
-        layout_.iterate(nodes_);
+        layout_->iterate(nodes_);
         maxVel = sf::Vector2f(0.f, 0.f);
 
         for (const auto& node : nodes_) {
@@ -94,22 +73,15 @@ bool zpr::GraphWindow::init(const std::vector<std::shared_ptr<zpr::Node>>& nodes
         }
 
         iterations++;
-        if (iterations > 100000)
-            break;
     }
 
     std::cout << "Layout stabilized after " << iterations << " iterations.\n"
               << maxVel.x << " " << maxVel.y << std::endl;
-    // for (int i = 0; i < 15000; ++i) layout_.iterate(nodes_);   // pre-relax
 
-    autoFitScale(radius_ + 12.4f);
+    autoFitScale();
 
     window_.create(sf::VideoMode({unsigned(view_), unsigned(view_)}), "Graph viewer");
     window_.setFramerateLimit(60);
-
-    // if (!font_.loadFromFile("Arial.ttf"))
-    //     std::cerr << "Warning: font not found, labels may be empty\n";
-    //
 
 #ifdef __APPLE__
     const char* fontPath_ = "/System/Library/Fonts/Supplemental/Arial.ttf";
@@ -141,7 +113,7 @@ int zpr::GraphWindow::run()
         return -1;
 
     while (window_.isOpen()) {
-        layout_.iterate(nodes_);
+        layout_->iterate(nodes_);
         processEvents();
         if (!window_.isOpen())
             break;
@@ -183,7 +155,7 @@ void zpr::GraphWindow::processEvents()
                     current_.reset();
                     break;
                 case sf::Keyboard::Key::Enter:
-                    autoFitScale(radius_ + 12.4f);
+                    autoFitScale();
                     break;
                 default:
                     break;
@@ -196,7 +168,8 @@ void zpr::GraphWindow::processEvents()
             sf::Vector2f center{view_ / 2.f, view_ / 2.f};
             current_.reset();
             for (auto& n : nodes_) {
-                if (length(mp - (n->pos_ * scale_ + center + offset_)) < radius_) {
+                sf::Vector2f temp = mp - (n->pos_ * scale_ + center + offset_);
+                if (std::hypot(temp.x, temp.y) < radius_) {
                     current_ = std::weak_ptr<Node>(n);
                 }
             }
@@ -206,6 +179,8 @@ void zpr::GraphWindow::processEvents()
 
 void zpr::GraphWindow::render()
 {
+    uint allPeopleCount{0};
+    uint infectedPeopleCount{0};
     window_.clear(sf::Color::White);
     sf::Vector2f center{view_ / 2.f, view_ / 2.f};
 
@@ -220,21 +195,31 @@ void zpr::GraphWindow::render()
         }
 
     for (auto& n : nodes_) {
-        auto shp = makeShapeFor(n, radius_);
+        zpr::ShapeMakerVisitor shapeMakerVisitor(radius_);
+        n->accept(shapeMakerVisitor);
+        sf::Shape& shp = shapeMakerVisitor.getShape();
+        float ratio{0};
 
-        shp->setFillColor(sf::Color(128, 128, 128));
+        allPeopleCount += n->getPeopleCount();
+        infectedPeopleCount += n->getInfectedCount();
 
-        shp->setOutlineThickness(2.f);
-        shp->setOutlineColor(sf::Color::Black);
-        shp->setPosition(n->pos_ * scale_ + center + offset_);
-        window_.draw(*shp);
+        if (n->getPeopleCount() > 0) {
+            ratio = std::clamp(
+                static_cast<float>(n->getInfectedCount()) / static_cast<float>(n->getPeopleCount()),
+                0.f, 1.0f);
+            sf::Uint8 r = static_cast<sf::Uint8>(128 + ratio * (255 - 128));
+            sf::Uint8 g = static_cast<sf::Uint8>(128 * (1 - ratio));
+            sf::Uint8 b = static_cast<sf::Uint8>(128 * (1 - ratio));
+            shp.setFillColor(sf::Color(r, g, b));
+        }
+        else {
+            shp.setFillColor(sf::Color::White);
+        }
 
-        sf::Text lbl(n->getName(), font_, 14u);
-        auto bb = lbl.getLocalBounds();
-        lbl.setOrigin({bb.width / 2.f, bb.height / 2.f});
-        lbl.setFillColor(sf::Color::White);
-        lbl.setPosition(shp->getPosition());
-        window_.draw(lbl);
+        shp.setOutlineThickness(2.f);
+        shp.setOutlineColor(sf::Color::Black);
+        shp.setPosition(n->pos_ * scale_ + center + offset_);
+        window_.draw(shp);
     }
     if (current_.lock()) {
         sf::RectangleShape bg({view_ * 0.6f, view_ * 0.35f});
@@ -243,9 +228,12 @@ void zpr::GraphWindow::render()
         bg.setPosition({view_ / 2.f, view_ / 2.f});
         window_.draw(bg);
 
-        std::string txt = "ID   : " + current_.lock()->getName() + '\n' +
-                          "People   : " + std::to_string(current_.lock()->getPeopleCount()) + '\n' +
-                          "Edges: " + std::to_string(current_.lock()->getAllNeighbours().size());
+        std::string txt =
+            "ID   : " + current_.lock()->getName() + '\n' +
+            "People   : " + std::to_string(current_.lock()->getPeopleCount()) + '\n' +
+            "Healthy   : " + std::to_string(current_.lock()->getHealthyCount()) + '\n' +
+            "Infected   : " + std::to_string(current_.lock()->getInfectedCount()) + '\n' +
+            "Edges: " + std::to_string(current_.lock()->getAllNeighbours().size());
         sf::Text info(txt, font_, 18u);
         info.setFillColor(sf::Color::White);
         auto bb = info.getLocalBounds();
@@ -254,6 +242,14 @@ void zpr::GraphWindow::render()
         window_.draw(info);
     }
     if (stats_) {
+        std::ostringstream oss;
+        oss << "Day: " << engine_->getDay() << " " << std::setw(2) << std::setfill('0')
+            << engine_->getHour() << ":" << std::setw(2) << std::setfill('0')
+            << engine_->getMinute() << "\n"
+            << "Nodes: " << nodes_.size() << "\n"
+            << "People: " << allPeopleCount << "\n"
+            << "Infected: " << infectedPeopleCount << "\n";
+        stats_.value().setString(oss.str());
         stats_.value().setPosition({view_ - stats_.value().getGlobalBounds().width - 8.f, 8.f});
         window_.draw(stats_.value());
     }

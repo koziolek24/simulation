@@ -1,40 +1,51 @@
 #include "simulation/engine.h"
 
+#include <agents/agents.h>
+#include <city/city.h>
+
+#include <cstdlib>
 #include <ctime>
-#include <iostream>
+#include <logging.hpp>
 #include <memory>
 #include <queue>
 #include <set>
+#include <stdexcept>
+#include <thread>
 #include <vector>
 
-#include "agents/agents.h"
-#include "city/city.h"
+#include "disease/disease.h"
 
 namespace zpr {
-void graphManager::addWorker(std::shared_ptr<zpr::Worker> newWorker)
+void GraphManager::addWorker(std::shared_ptr<zpr::Worker> newWorker)
 {
-    this->allWorkers_.push_back(std::move(newWorker));
+    this->allWorkers_.push_back(newWorker);
 }
-void graphManager::addNode(std::shared_ptr<zpr::Node> newNode)
+void GraphManager::addNode(std::shared_ptr<zpr::Node> newNode)
 {
-    this->allNodes_.push_back(std::move(newNode));
+    this->allNodes_.push_back(newNode);
+    //
+    std::string nodeName = newNode->getName();
+    if (this->nodesByName_.contains(nodeName))
+        LOG_WARNING "There are several nodes with name: ", nodeName);
+    else
+        this->nodesByName_[nodeName] = newNode;
 }
-std::vector<std::shared_ptr<zpr::Worker>> graphManager::getAllWorkers()
+const std::vector<std::shared_ptr<zpr::Worker>> GraphManager::getAllWorkers()
 {
     return this->allWorkers_;
 }
-std::vector<std::shared_ptr<zpr::Node>> graphManager::getAllNodes()
+const std::vector<std::shared_ptr<zpr::Node>> GraphManager::getAllNodes()
 {
     return this->allNodes_;
 }
-std::shared_ptr<zpr::Worker> graphManager::getWorkerById(unsigned int id)
+const std::shared_ptr<zpr::Worker> GraphManager::getWorkerById(unsigned int id)
 {
     if (this->allWorkers_.size() > id) {
         return this->allWorkers_[id];
     }
     return nullptr;
 }
-std::shared_ptr<zpr::Node> graphManager::getNodeById(unsigned int id)
+const std::shared_ptr<zpr::Node> GraphManager::getNodeById(unsigned int id)
 {
     if (this->allNodes_.size() > id) {
         return this->allNodes_[id];
@@ -42,16 +53,13 @@ std::shared_ptr<zpr::Node> graphManager::getNodeById(unsigned int id)
     return nullptr;
 }
 
-std::shared_ptr<zpr::Node> graphManager::getNodeByName(std::string nodeName)
+const std::shared_ptr<zpr::Node> GraphManager::getNodeByName(std::string nodeName)
 {
-    for (const auto& node : this->getAllNodes()) {
-        if (node->getName() == nodeName) {
-            return node;
-        }
-    }
+    if (this->nodesByName_.contains(nodeName))
+        return this->nodesByName_[nodeName];
     return nullptr;
 }
-void graphCreator::connectMetroToMetro(std::string firstStation, std::string secondStation)
+void GraphCreator::connectMetroToMetro(std::string firstStation, std::string secondStation)
 {
     std::shared_ptr<zpr::Metro> stationA =
         dynamic_pointer_cast<zpr::Metro>(this->getNodeByName(firstStation));
@@ -62,11 +70,12 @@ void graphCreator::connectMetroToMetro(std::string firstStation, std::string sec
         stationB->addConnection(stationA);
     }
     else {
-        std::cout << "Could not connect those stations, they are invalid." << std::endl;
+        LOG_WARNING "connectMetroToMetro: could not connect those nodes: ", firstStation, ":"
+                    , secondStation);
     }
     return;
 }
-void graphCreator::connectMetroToPlace(std::string stationName, std::shared_ptr<zpr::Place> place)
+void GraphCreator::connectMetroToPlace(std::string stationName, std::shared_ptr<zpr::Place> place)
 {
     std::shared_ptr<zpr::Metro> station =
         std::dynamic_pointer_cast<zpr::Metro>(this->getNodeByName(stationName));
@@ -75,25 +84,35 @@ void graphCreator::connectMetroToPlace(std::string stationName, std::shared_ptr<
         place->addConnectingStation(station);
     }
     else {
-        std::cout << "Could not connect those nodes, they are invalid." << std::endl;
+        LOG_WARNING  "connectMetroToPlace: Could not connect those nodes, they are invalid."
+                    , stationName , place->getName());
     }
     return;
 }
 
-void graphFinder::calculateCheapestPath(std::shared_ptr<zpr::Node> start)
+void GraphFinder::calculateCheapestPath(std::shared_ptr<zpr::Node> target)
 {
     std::queue<std::weak_ptr<zpr::Node>> queue;
-    unsigned int startID = start->getID();
-    this->cheapestPath_[{startID, startID}] = start;
-    queue.push(start);
+    unsigned int targetID = target->getID();
+    this->cheapestPath_[{targetID, targetID}] = target;
+    queue.push(target);
     while (!queue.empty()) {
-        std::weak_ptr<zpr::Node> currentNode = queue.front();
+        auto currentNode = queue.front().lock();
         queue.pop();
-        std::vector<std::weak_ptr<zpr::Node>> neighbours = currentNode.lock()->getAllNeighbours();
+        if (!currentNode) {
+            LOG_ERROR "calculateCheapestPath: currentNode is invalid");
+            continue;
+        }
+        std::vector<std::weak_ptr<zpr::Node>> neighbours = currentNode->getAllNeighbours();
         for (const auto& neighbour : neighbours) {
-            unsigned int neighbourID = neighbour.lock()->getID();
-            if (!this->cheapestPath_.contains({neighbourID, startID})) {
-                this->cheapestPath_[{neighbourID, startID}] = currentNode.lock();
+            auto sNeighbour = neighbour.lock();
+            if (!sNeighbour) {
+                LOG_ERROR "calculateCheapestPath: sNeighbour is invalid");
+                continue;
+            }
+            unsigned int neighbourID = sNeighbour->getID();
+            if (!this->cheapestPath_.contains({neighbourID, targetID})) {
+                this->cheapestPath_[{neighbourID, targetID}] = currentNode;
                 queue.push(neighbour);
             }
         }
@@ -101,7 +120,7 @@ void graphFinder::calculateCheapestPath(std::shared_ptr<zpr::Node> start)
     return;
 }
 
-void graphFinder::calculateAllPaths(std::vector<std::shared_ptr<zpr::Node>> allNodes)
+void GraphFinder::calculateAllPaths(std::vector<std::shared_ptr<zpr::Node>> allNodes)
 {
     for (auto node : allNodes) {
         this->calculateCheapestPath(node);
@@ -109,25 +128,41 @@ void graphFinder::calculateAllPaths(std::vector<std::shared_ptr<zpr::Node>> allN
     return;
 }
 
-void graphTravel::moveWorkerToTarget(std::shared_ptr<zpr::Worker> worker,
+void GraphTravel::moveWorkerToTarget(std::shared_ptr<zpr::Worker> worker,
                                      std::shared_ptr<zpr::Node> target)
 {
-    std::weak_ptr<zpr::Node> oldPosition = worker->getPosition();
-    oldPosition.lock()->removePeople(worker);
-    std::shared_ptr<zpr::Node> nextNode = this->getNextNode(oldPosition.lock(), target);
+    auto oldPosition = worker->getPosition().lock();
+    if (!oldPosition) {
+        LOG_ERROR  "moveWorkerToTarget: oldPosition is invalid - settingPosition to Home");
+        auto newPosition = worker->getHome().lock();
+        if (!newPosition) {
+            throw std::runtime_error(
+                "moveWorkerToTarget: Couldn't access worker's home - terminal error");
+        }
+        else {
+            worker->setPosition(newPosition);
+            newPosition->addPeople(worker);
+            LOG_INFO "moveWorkerToTarget: succesfully set worker's position to his home");
+            oldPosition = newPosition;
+        }
+    }
+    oldPosition->removePeople(worker);
+    std::shared_ptr<zpr::Node> nextNode = this->getNextNode(oldPosition, target);
     worker->setPosition(nextNode);
     nextNode->addPeople(worker);
+    return;
 }
 
-std::shared_ptr<zpr::Node> graphFinder::getNextNode(std::shared_ptr<zpr::Node> source,
-                                                  std::shared_ptr<zpr::Node> target)
+const std::shared_ptr<zpr::Node> GraphFinder::getNextNode(std::shared_ptr<zpr::Node> source,
+                                                          std::shared_ptr<zpr::Node> target)
 {
     unsigned int sourceID = source->getID();
     unsigned int targetID = target->getID();
     return this->cheapestPath_[{sourceID, targetID}];
 }
 
-std::shared_ptr<zpr::Node> graphFinder::findNearestEntertainment(std::shared_ptr<zpr::Node> position)
+const std::shared_ptr<zpr::Node> GraphFinder::findNearestEntertainment(
+    std::shared_ptr<zpr::Node> position)
 {
     std::queue<std::weak_ptr<zpr::Node>> queue;
     std::set<unsigned int> visitedNodes;
@@ -135,50 +170,38 @@ std::shared_ptr<zpr::Node> graphFinder::findNearestEntertainment(std::shared_ptr
     visitedNodes.insert(position->getID());
     std::weak_ptr<zpr::Node> nearestEntertainment;
     while (!queue.empty()) {
-        std::weak_ptr<zpr::Node> currentNode = queue.front();
+        auto currentNode = queue.front().lock();
         queue.pop();
-        if (currentNode.lock()->getNodeType() == "Entertainment") {
+        if (!currentNode) {
+            LOG_ERROR  "findNearestEntertainment: currentNode is invalid - skipping this node");
+            continue;
+        }
+        if (currentNode->getNodeType() == entertainmentType) {
             nearestEntertainment = currentNode;
             break;
         }
-        for (auto neighbour : currentNode.lock()->getAllNeighbours()) {
-            if (visitedNodes.find(neighbour.lock()->getID()) == visitedNodes.end()) {
-                visitedNodes.insert(neighbour.lock()->getID());
-                queue.push(neighbour);
+        for (auto neighbour : currentNode->getAllNeighbours()) {
+            auto sNeighbour = neighbour.lock();
+            if (!sNeighbour) {
+                LOG_ERROR "findNearestEntertainment: sNeighbour is invalid");
+                continue;
+            }
+            unsigned int neigbourID = sNeighbour->getID();
+            if (visitedNodes.find(neigbourID) == visitedNodes.end()) {
+                visitedNodes.insert(neigbourID);
+                queue.push(sNeighbour);
             }
         }
     }
-    return nearestEntertainment.lock();
-}
-
-void graphTravel::moveWorkerHome(std::shared_ptr<zpr::Worker> worker)
-{
-    std::weak_ptr<zpr::Node> position = worker->getPosition();
-    std::weak_ptr<zpr::Node> target = worker->getHome();
-    while (target.lock() != position.lock()) {
-        std::weak_ptr<zpr::Node> nextNode = this->getNextNode(position.lock(), target.lock());
-        worker->setPosition(nextNode);
-        position = worker->getPosition();
+    auto sEntertainment = nearestEntertainment.lock();
+    if (!sEntertainment) {
+        throw std::runtime_error(
+            "findNearestEntertainment: sEntertainment is invalid - terminal error");
     }
-    return;
+    return sEntertainment;
 }
 
-void graphTravel::moveWorkerWorkplace(std::shared_ptr<zpr::Worker> worker)
-{
-    std::cout << "Start ";
-    std::weak_ptr<zpr::Node> position = worker->getPosition();
-    std::cout << position.lock()->getName() << " ";
-    std::weak_ptr<zpr::Node> target = worker->getWorkplace();
-    std::cout << target.lock()->getName() << std::endl;
-    while (target.lock() != position.lock()) {
-        std::shared_ptr<zpr::Node> nextNode = this->getNextNode(position.lock(), target.lock());
-        this->moveWorkerToTarget(worker, nextNode);
-        position = worker->getPosition();
-    }
-    return;
-}
-
-void timeManager::incrementTime()
+void TimeManager::incrementTime()
 {
     this->minute_ += 5;
     if (this->minute_ >= 60) {
@@ -191,70 +214,245 @@ void timeManager::incrementTime()
     }
 }
 
-unsigned int timeManager::getHour()
+unsigned int TimeManager::getHour()
 {
     return this->hour_;
 }
 
-unsigned int timeManager::getDay()
+unsigned int TimeManager::getDay()
 {
     return this->day_;
 }
 
-unsigned int timeManager::getMinute()
+unsigned int TimeManager::getMinute()
 {
     return this->minute_;
 }
 
-void simulationEngine::doAction()
+void SimulationEngine::doAction()
 {
     unsigned int hour = this->getHour();
     unsigned int minute = this->getMinute();
+    unsigned int workStart = this->getWorkStartHour();
+    unsigned int entertainmentStart = this->getEntertainmentStartHour();
+    unsigned int entertainmentStartToLeave = this->getEntertainmentStartToLeaveHour();
+    unsigned int entertainmentEnd = this->getEntertainmentEndHour();
+    // double workSeverity = this->getWorkSeverity();
+    // double entertainmentSeverity = this->getEntertainmentSeverity();
+    double entertainmentGoProbability = this->getEntertainmentGoProbability();
+    double entertainmentLeaveProbability = this->getEntertainmentLeaveProbability();
+    zpr::target newTarget;
     for (auto worker : this->getAllWorkers()) {
-        if (hour == 7 and minute == 0) {
-            worker->setTarget(WorkplaceTarget);
+        // double workerSeverity = worker->getVirus()->getSeverity();
+        newTarget = worker->getTarget();
+        if (hour == entertainmentEnd) {
+            worker->setTarget(HomeTarget);
+            continue;
         }
-        else if (hour == 16 and minute == 0) {
-            int randomNumber = rand() % 10;
-            if (randomNumber < 4)
-                worker->setTarget(EntertainmentTarget);
+        if (hour == workStart) {
+            newTarget = WorkplaceTarget;
+        }
+        else if (hour == entertainmentStart && minute == 0) {
+            double randomNumber = ((double)rand()) / RAND_MAX;
+            if (randomNumber <= entertainmentGoProbability)
+                newTarget = EntertainmentTarget;
             else {
-                worker->setTarget(HomeTarget);
+                newTarget = HomeTarget;
             }
         }
-        else if (hour > 20 and minute % 30 == 0) {
-            int randomNumber = rand() % 10;
-            if (randomNumber < 5)
-                worker->setTarget(HomeTarget);
+        else if (hour >= entertainmentStartToLeave && (minute == 0 || minute == 30)) {
+            double randomNumber = ((double)rand()) / RAND_MAX;
+            if (randomNumber <= entertainmentLeaveProbability)
+                newTarget = HomeTarget;
         }
-        else if (hour == 24) {
-            worker->setTarget(HomeTarget);
+        if (newTarget != worker->getTarget()) {
+            worker->setTarget(newTarget);
         }
     }
-    for (auto worker : this->getAllWorkers()) {
-        this->doWorkerAction(worker);
+
+    std::vector<std::thread> threads;
+    for (auto& worker : this->getAllWorkers()) {
+        threads.emplace_back([this, worker]() { this->doWorkerAction(worker); });
     }
+
+    for (auto& t : threads) {
+        if (t.joinable())
+            t.join();
+    }
+
     this->incrementTime();
 }
 
-void simulationEngine::doWorkerAction(std::shared_ptr<zpr::Worker> worker)
+void SimulationEngine::doWorkerAction(std::shared_ptr<zpr::Worker> worker)
 {
-    std::weak_ptr<zpr::Node> target;
+    std::shared_ptr<zpr::Node> target = nullptr;
+    auto workerPosition = worker->getPosition().lock();
+    if (!workerPosition) {
+        LOG_ERROR "doWorkerAction: Worker position is invalid - trying to setPosition to Home");
+        auto newPosition = worker->getHome().lock();
+        if (!newPosition) {
+            throw std::runtime_error(
+                "doWorkerAction: Couldn't access worker's home - terminal error");
+        }
+        else {
+            worker->setPosition(newPosition);
+            newPosition->addPeople(worker);
+            LOG_INFO "doWorkerAction: succesfully set worker's position to his home");
+        }
+    }
+
     switch (worker->getTarget()) {
         case HomeTarget:
-            target = worker->getHome();
+            if (!worker->getHome().lock()) {
+                throw std::runtime_error(
+                    "doWorkerAction: Couldn't access worker's home - terminal error");
+            }
+            target = worker->getHome().lock();
             break;
         case WorkplaceTarget:
-            target = worker->getWorkplace();
+            if (!worker->getWorkplace().lock()) {
+                throw std::runtime_error(
+                    "doWorkerAction: Couldn't access worker's workplace - terminal error");
+                break;
+            }
+            target = worker->getWorkplace().lock();
             break;
         case EntertainmentTarget:
-            target = this->findNearestEntertainment(worker->getPosition().lock());
+            target = this->findNearestEntertainment(workerPosition);
             break;
     }
-    if (worker->getPosition().lock() != target.lock()) {
-        this->moveWorkerToTarget(worker, target.lock());
+
+    if (workerPosition == target)
+        return;
+
+    auto nextNode = this->getNextNode(workerPosition, target);
+
+    {
+        std::scoped_lock lock(workerPosition->getMutex());
+        workerPosition->removePeople(worker);
     }
+    std::scoped_lock lock(nextNode->getMutex());
+    nextNode->addPeople(worker);
+    worker->setPosition(nextNode);
+
+    for (auto& weakOther : nextNode->getPeople()) {
+        auto other = weakOther.lock();
+        if (!other)
+            continue;
+        if (other == worker)
+            continue;
+        unsigned int id = other->getVirus()->getSymptomsID();
+        double contagiousness = this->getContagiousnessByID(id);
+        if (contagiousness != 0)
+            std::cout << contagiousness << ":" << other->getID() << std::endl;
+        if (worker->getHealthStatus() == Healthy &&
+            (other->getHealthStatus() == Infected || other->getHealthStatus() == Sick)) {
+            if (contagiousness >= ((double)rand()) / RAND_MAX) {
+                worker->setHealthStatus(Infected);
+                worker->getVirus()->addSymptom(this->getInitialSymptom());
+            }
+        }
+    }
+    worker->getVirus()->evolve(this->getSymptoms());
+    // if (worker->getHealthStatus() == Infected && rand() % 1000 < 1){
+    //     worker->setHealthStatus(Healthy);
+    // }
+
     return;
+}
+
+void SimulationEngine::setSeverityEntertainment(double severityEntertainment)
+{
+    this->severityEntertainment_ = severityEntertainment;
+}
+void SimulationEngine::setSeverityWork(double severityWork)
+{
+    this->severityWork_ = severityWork;
+}
+void SimulationEngine::setWorkStartHour(unsigned int hour)
+{
+    this->workStartHour_ = hour;
+}
+void SimulationEngine::setEntertainmentStartHour(unsigned int hour)
+{
+    this->entertainmentStartHour_ = hour;
+}
+void SimulationEngine::setEntertainmentEndHour(unsigned int hour)
+{
+    this->entertainmentEndHour_ = hour;
+}
+void SimulationEngine::setEntertainmentStartToLeaveHour(unsigned int hour)
+{
+    this->entertainmentStartToLeaveHour_ = hour;
+}
+void SimulationEngine::setEntertainmentGoProbability(double probability)
+{
+    this->entertainmentGoProbability_ = probability;
+}
+void SimulationEngine::setEntertainmentLeaveProbability(double probability)
+{
+    this->entertainmentLeaveProbability_ = probability;
+}
+unsigned int SimulationEngine::getWorkStartHour()
+{
+    return this->workStartHour_;
+}
+unsigned int SimulationEngine::getEntertainmentStartHour()
+{
+    return this->entertainmentStartHour_;
+}
+unsigned int SimulationEngine::getEntertainmentEndHour()
+{
+    return this->entertainmentEndHour_;
+}
+unsigned int SimulationEngine::getEntertainmentStartToLeaveHour()
+{
+    return this->entertainmentStartToLeaveHour_;
+}
+double SimulationEngine::getWorkSeverity()
+{
+    return this->severityWork_;
+}
+double SimulationEngine::getEntertainmentSeverity()
+{
+    return this->severityEntertainment_;
+}
+double SimulationEngine::getEntertainmentGoProbability()
+{
+    return this->entertainmentGoProbability_;
+}
+double SimulationEngine::getEntertainmentLeaveProbability()
+{
+    return this->entertainmentLeaveProbability_;
+}
+
+void SimulationEngine::setVirusManager(VirusManager manager)
+{
+    this->virusManager_ = manager;
+}
+
+double SimulationEngine::getContagiousnessByID(unsigned int id)
+{
+    return this->virusManager_.getContagiousnessByID(id);
+}
+double SimulationEngine::getMortalityByID(unsigned int id)
+{
+    return this->virusManager_.getMortalityByID(id);
+}
+
+std::vector<std::shared_ptr<zpr::Symptom>> SimulationEngine::getSymptoms()
+{
+    return this->virusManager_.getSymptoms();
+}
+
+VirusManager SimulationEngine::getVirusManager()
+{
+    return this->virusManager_;
+}
+
+std::shared_ptr<Symptom> SimulationEngine::getInitialSymptom()
+{
+    return this->getVirusManager().getInitialSymptom();
 }
 
 }  // namespace zpr

@@ -8,22 +8,31 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(APP_RESOURCES "${CMAKE_CURRENT_SOURCE_DIR}/resources/fonts/Freesans.ttf")
 
-# Define flags for the compiler,
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -g -lsfml-graphics -lsfml-window -lsfml-system -Wnull-dereference -Wdouble-promotion -Wshadow -Wconversion -Wsign-conversion -Wformat=2)
-#-Wnull-dereference -Wdouble-promotion -Wshadow -Wconversion -Wsign-conversion -Wformat=2
+# Enable AddressSanitizer if requested
+option(ENABLE_ASAN "Enable AddressSanitizer" ON)
+
+if(ENABLE_ASAN)
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+endif()
+
+# Also add strict warnings
+add_compile_options(
+    -Wall -Wextra -Wpedantic -Werror
+    -Wnull-dereference -Wdouble-promotion
+    -Wshadow -Wconversion -Wsign-conversion -Wformat=2
+    -g
+)
 
 find_package(OpenGL REQUIRED)
 find_package(X11 REQUIRED)
 find_package(Freetype REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system filesystem thread)
-
 
 include_directories(
     ${PROJECT_SOURCE_DIR}/include
     ${OPENGL_INCLUDE_DIR}
     ${X11_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
 )
 
 add_subdirectory(third_party/SFML)
@@ -41,7 +50,6 @@ target_include_directories(zpr25l_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${OPENGL_INCLUDE_DIR}
     ${FREETYPE_INCLUDE_DIRS}
-    ${Boost_INCLUDE_DIRS}
 )
 target_link_libraries(zpr25l_lib PUBLIC  # <-- CHANGE PRIVATE TO PUBLIC
     sfml-graphics
@@ -50,7 +58,6 @@ target_link_libraries(zpr25l_lib PUBLIC  # <-- CHANGE PRIVATE TO PUBLIC
     ${OPENGL_gl_LIBRARY}
     ${X11_LIBRARIES}
     ${FREETYPE_LIBRARIES}
-    ${Boost_LIBRARIES}
 )
 
 add_executable(zpr25l_sim src/main.cc)

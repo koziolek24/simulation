@@ -9,6 +9,9 @@
 #ifndef AGENTS_H
 #define AGENTS_H
 
+#include <memory>
+
+#include "disease/disease.h"
 namespace zpr {
 enum healthStatus { Healthy, Infected, Sick, Dead };
 enum target { HomeTarget, WorkplaceTarget, EntertainmentTarget };
@@ -18,10 +21,15 @@ class Agent {
     unsigned int age_;
     enum healthStatus health_;
     target target_;
+    std::shared_ptr<Virus> virus_;
 
   public:
     Agent(unsigned int id, unsigned int age)
-        : id_(id), age_(age), health_(Healthy), target_(HomeTarget)
+        : id_(id),
+          age_(age),
+          health_(Healthy),
+          target_(HomeTarget),
+          virus_(std::make_shared<zpr::Virus>())
     {
     }
     healthStatus getHealthStatus();
@@ -32,6 +40,7 @@ class Agent {
     void setID(unsigned int newID);
     target getTarget();
     void setTarget(target newTarget);
+    std::shared_ptr<Virus>& getVirus();
 };
 }  // namespace zpr
 #endif

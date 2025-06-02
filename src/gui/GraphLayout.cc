@@ -9,7 +9,7 @@
 
 static sf::Vector2f normalize(sf::Vector2f v, float newLen = 1.f)
 {
-    float len = std::sqrt(v.x * v.x + v.y * v.y) + 1e-6f;
+    float len = std::hypot(v.x, v.y) + 1e-6f;
     return {v.x / len * newLen, v.y / len * newLen};
 }
 
@@ -34,7 +34,7 @@ bool zpr::GraphLayout::iterate(const std::vector<std::shared_ptr<zpr::Node>>& no
     for (auto& n : nodes)
         for (auto& w : n->getAllNeighbours()) {
             sf::Vector2f d = n->pos_ - w.lock()->pos_;
-            float dist = std::sqrt(d.x * d.x + d.y * d.y);
+            float dist = std::hypot(d.x, d.y);
             sf::Vector2f f = normalize(d) * (dist - k_);
             n->vel_ -= f;
             w.lock()->vel_ += f;
