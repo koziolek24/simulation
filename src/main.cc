@@ -1,8 +1,10 @@
+#include <Python.h>
 #include <simulation/engine.h>
 #include <utils/utils.h>
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <logging.hpp>
 #include <memory>
@@ -12,15 +14,21 @@
 #include "agents/agents.h"
 #include "disease/disease.h"
 #include "gui/GraphWindow.h"
+#include "utils/SimSettings.h"
 
 int main()
 {
+    // for finding and linking python for ploting
+    Py_Initialize();
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.path.append(\"" PYTHON_SITE "\")");
+
     init_logging();
     LOG_INFO  "ZPR SYMULACJA 2025");
     auto engine = std::make_shared<zpr::SimulationEngine>();
     auto virusManager = zpr::VirusManager();
     zpr::Reader reader;
-    // reader.writeJsonStructure("dane.json");
+    reader.writeJsonStructure("dane.json");
     // reader.writeViruses("virus.json");
     reader.readJsonStructure("dane.json", *engine);
     reader.readViruses("virus.json", virusManager);
@@ -33,8 +41,7 @@ int main()
     std::vector<std::shared_ptr<zpr::Worker>> workers = engine->getAllWorkers();
 
     if (!workers.empty()) {
-        unsigned int toInfect =
-            static_cast<unsigned int>(std::min(workers.size(), static_cast<std::size_t>(5)));
+        unsigned int toInfect = 1;
 
         std::srand(static_cast<unsigned>(std::time(nullptr)));
 
@@ -46,19 +53,23 @@ int main()
                 workers[index]->setHealthStatus(zpr::Infected);
                 std::shared_ptr<zpr::Symptom> initialSymptom = engine->getInitialSymptom();
                 workers[index]->getVirus()->addSymptom(initialSymptom);
-                std::cout << initialSymptom->getSymptomName() << " ";
-                std::cout << "Initially infected worker ID: " << workers[index]->getID()
-                          << std::endl;
             }
         }
     }
 
+    auto& settings = zpr::SimSettings::getInstance();
+
     std::thread t([&]() {
-        while (true) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            engine->doAction();
+        while (!settings.isFinished()) {
+            if (settings.isRunning()) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(settings.getSpeedDelay()));
+                engine->doAction();
+            }
         }
     });
-    t.detach();
-    return gw.run();
+
+    gw.run();
+    settings.setFinished(true);
+    t.join();
+    return 0;
 }

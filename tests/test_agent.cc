@@ -525,9 +525,3 @@ TEST_F(WorkerTest, RapidLocationChanges)
         EXPECT_EQ(currentPos->getID(), newLocation->getID());
     }
 }
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

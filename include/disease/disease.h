@@ -2,7 +2,7 @@
 #define DISEASE_H
 
 #include <memory>
-#include <unordered_set>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -36,7 +36,7 @@ class Symptom {
 class Virus {
   private:
     std::vector<std::shared_ptr<Symptom>> symptoms_;
-    std::unordered_set<std::string> symptomsName_;
+    std::set<std::string> symptomsName_;
     double severity_;
 
   public:

@@ -39,7 +39,13 @@ enum nodeType Node::getNodeType()
 unsigned int Node::getPeopleCount()
 {
     std::scoped_lock lock(this->nodeMutex_);
-    return (unsigned int)(this->presentPeople_.size());
+    unsigned int peopleCount = 0;
+    for (const auto& wPeople : this->presentPeople_) {
+        auto people = wPeople.lock();
+        if (people && people->getHealthStatus() != Dead)
+            peopleCount++;
+    }
+    return peopleCount;
 }
 unsigned int Node::getHealthyCount()
 {

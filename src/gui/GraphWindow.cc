@@ -1,3 +1,4 @@
+// Krzysztof Barałkiewicz
 #include "gui/GraphWindow.h"
 
 #include <SFML/Graphics.hpp>
@@ -8,10 +9,14 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <ostream>
 #include <sstream>
+#include <string>
 
 #include "SFML/System/Vector2.hpp"
+#include "SFML/Window/Keyboard.hpp"
 #include "city/city.h"
+#include "utils/SimSettings.h"
 #include "visitors/ShapeMakerVisitor.h"
 
 void zpr::GraphWindow::autoFitScale()
@@ -28,15 +33,24 @@ void zpr::GraphWindow::autoFitScale()
         maxPos.x = std::max(maxPos.x, n->pos_.x);
         maxPos.y = std::max(maxPos.y, n->pos_.y);
     }
+
     sf::Vector2f span = maxPos - minPos;
 
-    const float halfW = view_ * 0.5f - view_ * 0.05f;
-    const float sx = span.x > 0.f ? halfW / (span.x * 0.5f) : 1.f;
-    const float sy = span.y > 0.f ? halfW / (span.y * 0.5f) : 1.f;
+    // 🧠 Dodaj rozmiar węzła jako margines wokół grafu
+    float margin = radius_ * 2.f;  // margines w jednostkach świata
+    span.x += margin;
+    span.y += margin;
+
+    // Widoczna część ekranu (bez marginesów ekranu)
+    const float screenMargin = 0.05f;
+    const float usable = 1.f - screenMargin * 2.f;
+
+    float sx = span.x > 0.f ? (view_ * usable) / span.x : 1.f;
+    float sy = span.y > 0.f ? (view_ * usable) / span.y : 1.f;
     scale_ = std::min(sx, sy);
 
-    sf::Vector2f worldCentre = (minPos + maxPos) * 0.5f;
-    offset_ = -worldCentre * scale_;
+    sf::Vector2f worldCenter = (minPos + maxPos) * 0.5f;
+    offset_ = -worldCenter * scale_;
 }
 
 bool zpr::GraphWindow::init(const std::shared_ptr<SimulationEngine>& engine)
@@ -45,11 +59,11 @@ bool zpr::GraphWindow::init(const std::shared_ptr<SimulationEngine>& engine)
     nodes_ = engine->getAllNodes();
     size_t N = nodes_.size();
     float n = static_cast<float>(N);
-    view_ = std::clamp(200.f + std::sqrt(n) * 50.f, 400.f, 1200.f);
+    view_ = std::clamp(200.f + std::sqrt(n) * 50.f, 400.f, 900.f);
     scale_ = std::clamp(1.2f + n * 0.005f, 1.0f, 10.0f);
 
     float spring = std::clamp(1.f + std::log(n + 1) * 2.f, 1.f, 10.f);
-    float cooling = 0.96f;
+    float cooling = std::clamp(0.96f - n * 0.00002f, 0.90f, 0.96f);
 
     layout_ = std::make_unique<zpr::GraphLayout>(zpr::GraphLayout(view_ * scale_, spring, cooling));
 
@@ -60,7 +74,8 @@ bool zpr::GraphWindow::init(const std::shared_ptr<SimulationEngine>& engine)
     }
 
     sf::Vector2f maxVel(10.f, 10.f);
-    const float threshold = 0.01f;
+    const float baseThreshold = 0.01f;
+    float threshold = std::clamp(baseThreshold * std::sqrt(n / 100.f), baseThreshold, 0.1f);
     int iterations = 0;
 
     while (maxVel.x > threshold || maxVel.y > threshold) {
@@ -73,6 +88,15 @@ bool zpr::GraphWindow::init(const std::shared_ptr<SimulationEngine>& engine)
         }
 
         iterations++;
+
+        if (iterations % 1000 == 0) {
+            float progressX = 1.f - (maxVel.x / 10.f);
+            float progressY = 1.f - (maxVel.y / 10.f);
+            float progress = std::min(progressX, progressY);
+
+            progress = std::clamp(progress, 0.f, 1.f);
+            std::cout << "Stabilizing: " << static_cast<int>(progress * 100.f) << "%\n";
+        }
     }
 
     std::cout << "Layout stabilized after " << iterations << " iterations.\n"
@@ -102,7 +126,19 @@ bool zpr::GraphWindow::init(const std::shared_ptr<SimulationEngine>& engine)
     stats_.value().setFillColor(sf::Color::Black);
     stats_.value().setOutlineColor(sf::Color::White);
     stats_.value().setOutlineThickness(2.f);
-    stats_.value().setString("Nodes: " + std::to_string(nodes_.size()));
+
+    instructions_.emplace("", font_, 14u);
+    instructions_.value().setFont(font_);
+    instructions_.value().setCharacterSize(14u);
+    instructions_.value().setFillColor(sf::Color::Black);
+    instructions_.value().setOutlineColor(sf::Color::White);
+    instructions_.value().setOutlineThickness(2.f);
+    instructions_.value().setString(
+        "ESC - Quit\n"
+        "Arrow Keys - Move\n"
+        "+ / - - Zoom In / Out\n"
+        "Enter - Auto Fit\n"
+        "< / > - Change Speed");
 
     return true;
 }
@@ -151,11 +187,24 @@ void zpr::GraphWindow::processEvents()
                 case sf::Keyboard::Key::Equal:
                     scale_ *= 1.1f;
                     break;
-                case sf::Keyboard::Key::Escape:
+                case sf::Keyboard::Key::Q:
                     current_.reset();
                     break;
                 case sf::Keyboard::Key::Enter:
                     autoFitScale();
+                    break;
+                case sf::Keyboard::Key::Space:
+                    zpr::SimSettings::getInstance().pauseResume();
+                    break;
+                case sf::Keyboard::Key::Escape:
+                    zpr::SimSettings::getInstance().setFinished(true);
+                    window_.close();
+                    break;
+                case sf::Keyboard::Key::Comma:
+                    zpr::SimSettings::getInstance().decreaseSpeed();
+                    break;
+                case sf::Keyboard::Key::Period:
+                    zpr::SimSettings::getInstance().increaseSpeed();
                     break;
                 default:
                     break;
@@ -248,10 +297,17 @@ void zpr::GraphWindow::render()
             << engine_->getMinute() << "\n"
             << "Nodes: " << nodes_.size() << "\n"
             << "People: " << allPeopleCount << "\n"
-            << "Infected: " << infectedPeopleCount << "\n";
+            << "Infected: " << infectedPeopleCount << "\n"
+            << "Dead: " << engine_->getDeathPeopleCount() << "\n"
+            << "Running: " << zpr::SimSettings::getInstance().isRunning() << "\n"
+            << "Speed: " << zpr::SimSettings::getInstance().getSpeed() << "\n";
         stats_.value().setString(oss.str());
         stats_.value().setPosition({view_ - stats_.value().getGlobalBounds().width - 8.f, 8.f});
         window_.draw(stats_.value());
+    }
+    if (instructions_) {
+        instructions_.value().setPosition({8.f, 8.f});
+        window_.draw(instructions_.value());
     }
     window_.display();
 }

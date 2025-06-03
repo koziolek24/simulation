@@ -8,6 +8,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <vector>
@@ -15,6 +16,7 @@
 #include "agents/peoples.h"
 #include "city/city.h"
 #include "disease/disease.h"
+#include "utils/SimStatsLogger.h"
 
 namespace zpr {
 class TimeManager {
@@ -71,7 +73,7 @@ class GraphTravel : public GraphFinder {
     // void moveWorkerWorkplace(std::shared_ptr<zpr::Worker> worker);
 };
 
-class SimulationEngine : public GraphCreator, public TimeManager, public GraphTravel {
+class SimulationConfig {
   private:
     double severityEntertainment_;
     double severityWork_;
@@ -83,9 +85,10 @@ class SimulationEngine : public GraphCreator, public TimeManager, public GraphTr
     double entertainmentGoProbability_;
     double entertainmentLeaveProbability_;
     VirusManager virusManager_;
+    std::atomic_uint deathPeopleCount_;
 
   public:
-    SimulationEngine() : severityEntertainment_(0), severityWork_(0) {}
+    SimulationConfig() : severityEntertainment_(0), severityWork_(0), deathPeopleCount_(0) {}
     void setSeverityEntertainment(double severityEntertainment);
     void setSeverityWork(double severityWork);
     void setWorkStartHour(unsigned int hour);
@@ -106,10 +109,18 @@ class SimulationEngine : public GraphCreator, public TimeManager, public GraphTr
     double getEntertainmentLeaveProbability();
     double getMortalityByID(unsigned int id);
     double getContagiousnessByID(unsigned int id);
+    std::atomic_uint& getDeathPeopleCount();
     VirusManager getVirusManager();
     std::vector<std::shared_ptr<zpr::Symptom>> getSymptoms();
     std::shared_ptr<Symptom> getInitialSymptom();
 
+    void increaseDeadPeopleCount(uint amount = 1);
+};
+
+class SimulationEngine : public GraphCreator, public TimeManager, public GraphTravel, public SimulationConfig {
+  private:
+    zpr::SimulationLogger simLogger_;
+  public:
     void doAction();
     void doWorkerAction(std::shared_ptr<zpr::Worker> worker);
 };

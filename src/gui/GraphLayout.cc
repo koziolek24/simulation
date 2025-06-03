@@ -1,4 +1,4 @@
-
+// Krzysztof Barałkiewicz
 #include "gui/GraphLayout.h"
 
 #include <algorithm>

@@ -156,7 +156,6 @@ void Virus::evolve(std::vector<std::shared_ptr<Symptom>> allSymptoms)
             double probability = this->getEvolveSymptomProbability(symptom);
             if (probability >= ((double)rand()) / RAND_MAX) {
                 this->addSymptom(symptom);
-                std::cout << "evolving: " << symptom->getSymptomName() << std::endl;
             }
         }
     }

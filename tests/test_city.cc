@@ -383,9 +383,3 @@ TEST_F(CityNetworkTest, LargeScaleSimulation)
 
     EXPECT_EQ(metro1->getPeopleCount(), 0);
 }
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

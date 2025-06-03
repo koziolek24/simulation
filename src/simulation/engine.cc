@@ -1,8 +1,10 @@
+// Krzysztof Barałkiewicz
 #include "simulation/engine.h"
 
 #include <agents/agents.h>
 #include <city/city.h>
 
+#include <atomic>
 #include <cstdlib>
 #include <ctime>
 #include <logging.hpp>
@@ -279,12 +281,29 @@ void SimulationEngine::doAction()
         if (t.joinable())
             t.join();
     }
-
+    unsigned int tempHour = this->getHour();
     this->incrementTime();
+    if (tempHour != this->getHour()) {
+        unsigned int peopleCount{0};
+        unsigned int infectedCount{0};
+
+        for (auto& node : this->getAllNodes()) {
+            peopleCount += node->getPeopleCount();
+            infectedCount += node->getInfectedCount();
+        }
+
+        SimulationLogger::Stats stats(this->getDay(), this->getHour(), peopleCount, infectedCount,
+                                      this->getDeathPeopleCount());
+        this->simLogger_.saveToCSV(stats);
+    }
 }
 
 void SimulationEngine::doWorkerAction(std::shared_ptr<zpr::Worker> worker)
 {
+    if(worker->getHealthStatus() == Dead)
+    {
+        return;
+    }
     std::shared_ptr<zpr::Node> target = nullptr;
     auto workerPosition = worker->getPosition().lock();
     if (!workerPosition) {
@@ -343,8 +362,6 @@ void SimulationEngine::doWorkerAction(std::shared_ptr<zpr::Worker> worker)
             continue;
         unsigned int id = other->getVirus()->getSymptomsID();
         double contagiousness = this->getContagiousnessByID(id);
-        if (contagiousness != 0)
-            std::cout << contagiousness << ":" << other->getID() << std::endl;
         if (worker->getHealthStatus() == Healthy &&
             (other->getHealthStatus() == Infected || other->getHealthStatus() == Sick)) {
             if (contagiousness >= ((double)rand()) / RAND_MAX) {
@@ -352,6 +369,13 @@ void SimulationEngine::doWorkerAction(std::shared_ptr<zpr::Worker> worker)
                 worker->getVirus()->addSymptom(this->getInitialSymptom());
             }
         }
+    }
+    unsigned int workerID = worker->getVirus()->getSymptomsID();
+    double mortality = this->getMortalityByID(workerID);
+    if (mortality >= ((double)rand()) / RAND_MAX) {
+        worker->setHealthStatus(Dead);
+        this->increaseDeadPeopleCount();
+        return;
     }
     worker->getVirus()->evolve(this->getSymptoms());
     // if (worker->getHealthStatus() == Infected && rand() % 1000 < 1){
@@ -361,98 +385,108 @@ void SimulationEngine::doWorkerAction(std::shared_ptr<zpr::Worker> worker)
     return;
 }
 
-void SimulationEngine::setSeverityEntertainment(double severityEntertainment)
+void SimulationConfig::setSeverityEntertainment(double severityEntertainment)
 {
     this->severityEntertainment_ = severityEntertainment;
 }
-void SimulationEngine::setSeverityWork(double severityWork)
+void SimulationConfig::setSeverityWork(double severityWork)
 {
     this->severityWork_ = severityWork;
 }
-void SimulationEngine::setWorkStartHour(unsigned int hour)
+void SimulationConfig::setWorkStartHour(unsigned int hour)
 {
     this->workStartHour_ = hour;
 }
-void SimulationEngine::setEntertainmentStartHour(unsigned int hour)
+void SimulationConfig::setEntertainmentStartHour(unsigned int hour)
 {
     this->entertainmentStartHour_ = hour;
 }
-void SimulationEngine::setEntertainmentEndHour(unsigned int hour)
+void SimulationConfig::setEntertainmentEndHour(unsigned int hour)
 {
     this->entertainmentEndHour_ = hour;
 }
-void SimulationEngine::setEntertainmentStartToLeaveHour(unsigned int hour)
+void SimulationConfig::setEntertainmentStartToLeaveHour(unsigned int hour)
 {
     this->entertainmentStartToLeaveHour_ = hour;
 }
-void SimulationEngine::setEntertainmentGoProbability(double probability)
+void SimulationConfig::setEntertainmentGoProbability(double probability)
 {
     this->entertainmentGoProbability_ = probability;
 }
-void SimulationEngine::setEntertainmentLeaveProbability(double probability)
+void SimulationConfig::setEntertainmentLeaveProbability(double probability)
 {
     this->entertainmentLeaveProbability_ = probability;
 }
-unsigned int SimulationEngine::getWorkStartHour()
+unsigned int SimulationConfig::getWorkStartHour()
 {
     return this->workStartHour_;
 }
-unsigned int SimulationEngine::getEntertainmentStartHour()
+unsigned int SimulationConfig::getEntertainmentStartHour()
 {
     return this->entertainmentStartHour_;
 }
-unsigned int SimulationEngine::getEntertainmentEndHour()
+unsigned int SimulationConfig::getEntertainmentEndHour()
 {
     return this->entertainmentEndHour_;
 }
-unsigned int SimulationEngine::getEntertainmentStartToLeaveHour()
+unsigned int SimulationConfig::getEntertainmentStartToLeaveHour()
 {
     return this->entertainmentStartToLeaveHour_;
 }
-double SimulationEngine::getWorkSeverity()
+double SimulationConfig::getWorkSeverity()
 {
     return this->severityWork_;
 }
-double SimulationEngine::getEntertainmentSeverity()
+double SimulationConfig::getEntertainmentSeverity()
 {
     return this->severityEntertainment_;
 }
-double SimulationEngine::getEntertainmentGoProbability()
+double SimulationConfig::getEntertainmentGoProbability()
 {
     return this->entertainmentGoProbability_;
 }
-double SimulationEngine::getEntertainmentLeaveProbability()
+double SimulationConfig::getEntertainmentLeaveProbability()
 {
     return this->entertainmentLeaveProbability_;
 }
 
-void SimulationEngine::setVirusManager(VirusManager manager)
+std::atomic_uint& zpr::SimulationConfig::getDeathPeopleCount()
+{
+    return this->deathPeopleCount_;
+}
+
+void SimulationConfig::setVirusManager(VirusManager manager)
 {
     this->virusManager_ = manager;
 }
 
-double SimulationEngine::getContagiousnessByID(unsigned int id)
+double SimulationConfig::getContagiousnessByID(unsigned int id)
 {
     return this->virusManager_.getContagiousnessByID(id);
 }
-double SimulationEngine::getMortalityByID(unsigned int id)
+double SimulationConfig::getMortalityByID(unsigned int id)
 {
     return this->virusManager_.getMortalityByID(id);
 }
 
-std::vector<std::shared_ptr<zpr::Symptom>> SimulationEngine::getSymptoms()
+std::vector<std::shared_ptr<zpr::Symptom>> SimulationConfig::getSymptoms()
 {
     return this->virusManager_.getSymptoms();
 }
 
-VirusManager SimulationEngine::getVirusManager()
+VirusManager SimulationConfig::getVirusManager()
 {
     return this->virusManager_;
 }
 
-std::shared_ptr<Symptom> SimulationEngine::getInitialSymptom()
+std::shared_ptr<Symptom> SimulationConfig::getInitialSymptom()
 {
     return this->getVirusManager().getInitialSymptom();
+}
+
+void SimulationConfig::increaseDeadPeopleCount(uint amount)
+{
+    this->deathPeopleCount_ += amount;
 }
 
 }  // namespace zpr

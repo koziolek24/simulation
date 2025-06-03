@@ -34,6 +34,7 @@ class GraphWindow {
     sf::RenderWindow window_;
     sf::Font font_;
     std::optional<sf::Text> stats_;
+    std::optional<sf::Text> instructions_;
 
     float view_;
     float scale_;
